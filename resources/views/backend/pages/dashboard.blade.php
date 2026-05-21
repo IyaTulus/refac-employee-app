@@ -16,7 +16,11 @@
                     </div>
 
                     <div class="card-body">
-                        <h5>Selamat datang, {{ Auth::user()?->username ?? 'User' }}!</h5>
+                        @php($user = Auth::user())
+                        @php($roleName = $user?->loadMissing('role')?->role?->name)
+                        <h5>Selamat datang, {{ Auth::user()?->username ?? 'User' }} -
+                            {{ $roleName ?: 'role' }}!
+                        </h5>
                         <p>Ini halaman dashboard. Tempat untuk menampilkan ringkasan, statistik, dan tautan navigasi.</p>
 
                         {{-- Contoh container sederhana --}}

@@ -26,10 +26,12 @@ class StoreEmployeeRequest extends FormRequest
     {
         return [
             'photo' => ['nullable', 'image', 'mimes:png,jpg,jpeg', 'max:2048'],
-            'employee_code' => ['required', 'string', 'regex:/^[0-9]{8,}$/', 'unique:employees,employee_code'],
+            // format EMP-001 (prefix EMP- followed by 3 digits)
+            'employee_code' => ['required', 'string', 'regex:/^EMP-\d{3}$/', 'unique:employees,employee_code'],
             'full_name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z0-9\'\s]+$/'],
             'email' => ['required', 'email', 'max:255', 'unique:employees,email'],
-            'phone' => ['required', 'string', 'max:20', 'unique:employees,phone', 'regex:/^\+?[1-9]\d{1,14}$/'],
+            // accept local Indonesian style starting with 0, e.g. 081234567890
+            'phone' => ['required', 'string', 'max:20', 'unique:employees,phone', 'regex:/^0\d{9,13}$/'],
             'birth_place' => ['required', 'string', 'max:100'],
             'birth_date' => ['required', 'date', 'before:today'],
             'gender' => ['required', 'in:male,female'],
@@ -55,8 +57,8 @@ class StoreEmployeeRequest extends FormRequest
     public function messages()
     {
         return [
-            'employee_code.regex' => 'NIP minimal 8 karakter dan hanya angka.',
-            'phone.regex' => 'Format nomor HP internasional tidak valid (contoh: +62xxx).',
+            'employee_code.regex' => 'Format NIP harus EMP-XXX (contoh: EMP-001).',
+            'phone.regex' => 'Format nomor HP harus dimulai dengan 0 (contoh: 081234567890).',
             'full_name.regex' => 'Nama hanya boleh berisi huruf, angka, tanda petik satu (\'), dan spasi.',
         ];
     }

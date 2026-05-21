@@ -2,7 +2,9 @@ SET NAMES utf8;
 
 SET time_zone = '+07:00';
 
--- Dummy data for roles table
+-- =========================
+-- DUMMY DATA ROLES
+-- =========================
 INSERT INTO
     `roles` (
         `id`,
@@ -19,7 +21,9 @@ VALUES (
     (2, 'Admin HRD', NOW(), NOW()),
     (3, 'Employee', NOW(), NOW());
 
--- Dummy data for menus table
+-- =========================
+-- DUMMY DATA MENUS
+-- =========================
 INSERT INTO
     `menus` (
         `id`,
@@ -82,7 +86,9 @@ VALUES (
         'fa-cog'
     );
 
--- Dummy data for employees table
+-- =========================
+-- DUMMY DATA EMPLOYEES
+-- =========================
 INSERT INTO
     `employees` (
         `id`,
@@ -217,11 +223,14 @@ VALUES (
         1
     );
 
--- Dummy data for users table
+-- =========================
+-- DUMMY DATA USERS
+-- =========================
 INSERT INTO
     `users` (
         `id`,
         `employee_id`,
+        `role_id`,
         `username`,
         `email`,
         `phone`,
@@ -231,34 +240,39 @@ INSERT INTO
 VALUES (
         'a1b2c3d4-e5f6-a7b8-c9d0-e1f2a3b4c5d6',
         '0a9a6b6a-3b4b-4b2b-8b1b-0b9b8b7b6b5b',
+        1,
         'superadmin',
         'superadmin@example.com',
         '081111111111',
         '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
         1
-    ), -- password
+    ),
     (
         'b2c3d4e5-f6a7-b8c9-d0e1-f2a3b4c5d6a7',
         '3d6d5d4d-6e7e-7e5e-1e4e-3d6d5d4d3d2d',
+        2,
         'adminhrd',
         'adminhrd@example.com',
         '082222222222',
         '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
         1
-    ), -- password
+    ),
     (
         'c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6a7b8',
         '1b8b7b6b-4c5c-5c3c-9c2c-1c8c7c6c5c4c',
+        3,
         'aniyudhoyono',
         'ani.yudhoyono@example.com',
         '081234567891',
         '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
         1
     );
--- password
 
--- Dummy data for accesses table
--- Super Admin (role_id 1) has full access to all menus
+-- =========================
+-- DUMMY DATA ACCESSES
+-- =========================
+
+-- Super Admin
 INSERT INTO
     `accesses` (
         `id_role`,
@@ -321,7 +335,7 @@ VALUES (
         'allow'
     );
 
--- Admin HRD (role_id 2) has access to HR menus
+-- Admin HRD
 INSERT INTO
     `accesses` (
         `id_role`,
@@ -384,7 +398,7 @@ VALUES (
         'allow'
     );
 
--- Employee (role_id 3) has limited access
+-- Employee
 INSERT INTO
     `accesses` (
         `id_role`,
@@ -407,7 +421,9 @@ VALUES (
         'deny'
     );
 
--- Dummy data for employee_educations table
+-- =========================
+-- DUMMY DATA EMPLOYEE EDUCATIONS
+-- =========================
 INSERT INTO
     `employee_educations` (
         `id`,
@@ -442,7 +458,9 @@ VALUES (
         2010
     );
 
--- Dummy data for parent_data and child_data
+-- =========================
+-- DUMMY DATA PARENT
+-- =========================
 INSERT INTO
     `parent_data` (`id`, `employee_id`, `name`)
 VALUES (
@@ -456,6 +474,9 @@ VALUES (
         'Ibu Budi'
     );
 
+-- =========================
+-- DUMMY DATA CHILD
+-- =========================
 INSERT INTO
     `child_data` (`parent_id`, `name`)
 VALUES (1, 'Anak Pertama Budi'),
@@ -465,7 +486,9 @@ VALUES (1, 'Anak Pertama Budi'),
         'Anak Pertama Budi dari Ibu'
     );
 
--- Dummy data for transport_settings table
+-- =========================
+-- DUMMY DATA TRANSPORT SETTINGS
+-- =========================
 INSERT INTO
     `transport_settings` (
         `id`,
@@ -480,7 +503,9 @@ VALUES (
         'a1b2c3d4-e5f6-a7b8-c9d0-e1f2a3b4c5d6'
     );
 
--- Dummy data for transport_allowances table
+-- =========================
+-- DUMMY DATA TRANSPORT ALLOWANCES
+-- =========================
 INSERT INTO
     `transport_allowances` (
         `id`,

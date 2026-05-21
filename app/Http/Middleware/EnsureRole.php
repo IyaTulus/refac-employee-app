@@ -12,16 +12,19 @@ class EnsureRole
     {
         $user = $request->user();
 
-        if (! $user || ! $user->relationLoaded('role') && ! $user->role) {
+        if (! $user) {
             abort(403, 'Role tidak ditemukan.');
         }
 
         $roleName = $user->role?->name;
-        $normalizedRole = strtolower((string) $roleName);
+
+        if (! $roleName) {
+            abort(403, 'Role tidak ditemukan.');
+        }
 
         $allowed = collect($roles)
             ->map(fn ($role) => strtolower(trim($role)))
-            ->contains($normalizedRole);
+            ->contains(strtolower(trim($roleName)));
 
         if (! $allowed) {
             abort(403, 'Anda tidak memiliki akses ke halaman ini.');

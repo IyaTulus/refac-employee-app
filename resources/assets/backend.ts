@@ -1,4 +1,7 @@
 import '../../vendor/jeemce/laravel/assets/vendor.js'
+import 'select2/dist/css/select2.min.css'
+import 'select2-bootstrap-5-theme/dist/select2-bootstrap-5-theme.min.css'
+import 'select2'
 import '../../vendor/jeemce/laravel-theme-admin-v5/assets/vendor.ts'
 import '../../vendor/jeemce/laravel-theme-admin-v5/assets/theme.ts'
 import '../../vendor/jeemce/laravel/assets/main.js'

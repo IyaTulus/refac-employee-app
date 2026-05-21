@@ -3,9 +3,7 @@
 use Illuminate\Support\Facades\Route;
 
 // Frontend routes
-Route::middleware('guest')->group(function () {
-    require __DIR__ . '/auth/frontend.php';
-});
+require __DIR__ . '/auth/frontend.php';
 
 // Backend routes (jika pakai prefix /admin)
 Route::middleware(['auth'])->prefix('admin')->group(function () {

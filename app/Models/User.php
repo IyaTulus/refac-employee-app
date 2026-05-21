@@ -14,6 +14,10 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
+    public $incrementing = false;
+
+    protected $keyType = 'string';
+
     /**
      * The attributes that are mass assignable.
      *
@@ -54,9 +58,19 @@ class User extends Authenticatable
         ];
     }
 
+    public function hasField(string $field): bool
+    {
+        return array_key_exists($field, $this->getAttributes()) || $this->relationLoaded($field);
+    }
+
     public function role(): BelongsTo
     {
-        return $this->belongsTo(Role::class);
+        return $this->belongsTo(Role::class, 'role_id');
+    }
+
+    public function roles(): BelongsTo
+    {
+        return $this->belongsTo(Role::class, 'role_id');
     }
 
     public function employee(): BelongsTo

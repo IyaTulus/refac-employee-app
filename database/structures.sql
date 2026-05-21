@@ -1,4 +1,4 @@
-SET NAMES utf8;
+SET NAMES utf8mb4;
 
 SET time_zone = '+00:00';
 
@@ -25,31 +25,6 @@ CREATE TABLE IF NOT EXISTS `activities` (
     `created_by` int(11) DEFAULT NULL,
     `updated_by` int(11) DEFAULT NULL,
     PRIMARY KEY (`id`)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_520_nopad_ci;
-
-CREATE TABLE IF NOT EXISTS `file` (
-    `id` bigint(20) NOT NULL AUTO_INCREMENT,
-    `name` varchar(256) NOT NULL,
-    `mime` varchar(256) NOT NULL,
-    `size` varchar(32) NOT NULL,
-    `path` text NOT NULL,
-    `parent_id` bigint(20) NOT NULL,
-    `parent_table` varchar(256) NOT NULL,
-    `parent_field` varchar(256) NOT NULL,
-    `created_at` datetime DEFAULT NULL,
-    `updated_at` datetime DEFAULT NULL,
-    `created_by` int(11) DEFAULT NULL,
-    `updated_by` int(11) DEFAULT NULL,
-    PRIMARY KEY (`id`),
-    KEY `created_by` (`created_by`),
-    KEY `updated_by` (`updated_by`),
-    KEY `index` (
-        `parent_id`,
-        `parent_table`,
-        `parent_field`
-    ) USING BTREE,
-    CONSTRAINT `file_ibfk_1` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-    CONSTRAINT `file_ibfk_2` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_520_nopad_ci;
 
 CREATE TABLE IF NOT EXISTS `jobs` (
@@ -100,23 +75,6 @@ CREATE TABLE IF NOT EXISTS `roles` (
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_520_nopad_ci;
 
-CREATE TABLE IF NOT EXISTS `accesses` (
-    `id` bigint(20) NOT NULL AUTO_INCREMENT,
-    `id_role` int(11) NOT NULL,
-    `id_menu` int(11) NOT NULL,
-    `read` varchar(16) DEFAULT NULL,
-    `view` varchar(16) DEFAULT NULL,
-    `create` varchar(16) DEFAULT NULL,
-    `update` varchar(16) DEFAULT NULL,
-    `delete` varchar(16) DEFAULT NULL,
-    `publish` varchar(16) DEFAULT NULL,
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `unik` (`id_role`, `id_menu`),
-    KEY `web_level_admin_menus_ibfk_1` (`id_menu`),
-    CONSTRAINT `id_menu_fk` FOREIGN KEY (`id_menu`) REFERENCES `menus` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT `id_role_fk` FOREIGN KEY (`id_role`) REFERENCES `roles` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_520_nopad_ci;
-
 CREATE TABLE IF NOT EXISTS `menus` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
     `id_menu` int(11) DEFAULT NULL,
@@ -137,54 +95,43 @@ CREATE TABLE IF NOT EXISTS `menus` (
     CONSTRAINT `menus_id_menu_fk` FOREIGN KEY (`id_menu`) REFERENCES `menus` (`id`) ON UPDATE CASCADE
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_520_nopad_ci ROW_FORMAT = COMPACT;
 
-CREATE TABLE IF NOT EXISTS `sessions` (
-    `id` varchar(255) NOT NULL,
-    `user_id` bigint(20) unsigned DEFAULT NULL,
-    `ip_address` varchar(45) DEFAULT NULL,
-    `user_agent` text DEFAULT NULL,
-    `payload` longtext NOT NULL,
-    `last_activity` int(11) NOT NULL,
-    PRIMARY KEY (`id`),
-    KEY `sessions_user_id_index` (`user_id`),
-    KEY `sessions_last_activity_index` (`last_activity`)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
-
-CREATE TABLE employees (
-    id CHAR(36) PRIMARY KEY,
-    photo VARCHAR(255) NULL,
-    employee_code VARCHAR(255) UNIQUE NOT NULL,
-    full_name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    phone VARCHAR(255) UNIQUE NOT NULL,
-    birth_place VARCHAR(255) NOT NULL,
-    birth_date DATE NOT NULL,
-    gender ENUM('male', 'female') NOT NULL,
-    marital_status ENUM('kawin', 'tidak kawin') NOT NULL,
-    children_count INT DEFAULT 0 NOT NULL,
-    kecamatan VARCHAR(255) NOT NULL,
-    kabupaten VARCHAR(255) NOT NULL,
-    provinsi VARCHAR(255) NOT NULL,
-    address TEXT NOT NULL,
-    distance_km DECIMAL(8, 2) DEFAULT 0 NOT NULL,
-    position ENUM('manager', 'staf', 'magang') NOT NULL,
-    employment_status ENUM(
+CREATE TABLE IF NOT EXISTS `employees` (
+    `id` CHAR(36) NOT NULL,
+    `photo` VARCHAR(255) NULL,
+    `employee_code` VARCHAR(255) UNIQUE NOT NULL,
+    `full_name` VARCHAR(255) NOT NULL,
+    `email` VARCHAR(255) UNIQUE NOT NULL,
+    `phone` VARCHAR(255) UNIQUE NOT NULL,
+    `birth_place` VARCHAR(255) NOT NULL,
+    `birth_date` DATE NOT NULL,
+    `gender` ENUM('male', 'female') NOT NULL,
+    `marital_status` ENUM('kawin', 'tidak kawin') NOT NULL,
+    `children_count` INT DEFAULT 0 NOT NULL,
+    `kecamatan` VARCHAR(255) NOT NULL,
+    `kabupaten` VARCHAR(255) NOT NULL,
+    `provinsi` VARCHAR(255) NOT NULL,
+    `address` TEXT NOT NULL,
+    `distance_km` DECIMAL(8, 2) DEFAULT 0 NOT NULL,
+    `position` ENUM('manager', 'staf', 'magang') NOT NULL,
+    `employment_status` ENUM(
         'contract',
         'permanent',
         'intern'
     ) NOT NULL,
-    department ENUM(
+    `department` ENUM(
         'marketing',
         'hrd',
         'production',
         'executive',
         'commissioner'
     ) NOT NULL,
-    join_date DATE NOT NULL,
-    resign_date DATE NULL,
-    is_active BOOLEAN DEFAULT TRUE NOT NULL,
-    created_at TIMESTAMP NULL,
-    updated_at TIMESTAMP NULL
-);
+    `join_date` DATE NOT NULL,
+    `resign_date` DATE NULL,
+    `is_active` BOOLEAN DEFAULT TRUE NOT NULL,
+    `created_at` TIMESTAMP NULL,
+    `updated_at` TIMESTAMP NULL,
+    PRIMARY KEY (`id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_520_nopad_ci;
 
 CREATE INDEX employees_employee_code_index ON employees (employee_code);
 
@@ -204,78 +151,143 @@ CREATE INDEX employees_join_date_index ON employees (join_date);
 
 CREATE INDEX employees_is_active_index ON employees (is_active);
 
-CREATE TABLE users (
-    id CHAR(36) PRIMARY KEY,
-    employee_id CHAR(36) NULL UNIQUE,
-    username VARCHAR(255) UNIQUE NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    phone VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    is_active BOOLEAN DEFAULT 0 NOT NULL,
-    remember_token VARCHAR(100) NULL,
-    last_login_at TIMESTAMP NULL,
-    created_at TIMESTAMP NULL,
-    updated_at TIMESTAMP NULL,
-    CONSTRAINT users_employee_id_foreign FOREIGN KEY (employee_id) REFERENCES employees (id) ON DELETE SET NULL
-);
+CREATE TABLE IF NOT EXISTS `users` (
+    `id` CHAR(36) NOT NULL,
+    `employee_id` CHAR(36) NULL UNIQUE,
+    `role_id` INT(11) NOT NULL,
+    `username` VARCHAR(255) UNIQUE NOT NULL,
+    `email` VARCHAR(255) UNIQUE NOT NULL,
+    `phone` VARCHAR(255) UNIQUE NOT NULL,
+    `password` VARCHAR(255) NOT NULL,
+    `is_active` BOOLEAN DEFAULT 0 NOT NULL,
+    `remember_token` VARCHAR(100) NULL,
+    `last_login_at` TIMESTAMP NULL,
+    `created_at` TIMESTAMP NULL,
+    `updated_at` TIMESTAMP NULL,
+    PRIMARY KEY (`id`),
+    KEY `idx_users_employee_id` (`employee_id`),
+    KEY `idx_users_role_id` (`role_id`),
+    CONSTRAINT `users_employee_id_foreign` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT `users_role_id_foreign` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_520_nopad_ci;
 
-CREATE TABLE employee_educations (
-    id CHAR(36) PRIMARY KEY,
-    employee_id CHAR(36) NOT NULL,
-    level VARCHAR(255) NOT NULL,
-    institution VARCHAR(255) NOT NULL,
-    major VARCHAR(255) NULL,
-    graduation_year YEAR NULL,
-    created_at TIMESTAMP NULL,
-    updated_at TIMESTAMP NULL,
-    CONSTRAINT employee_educations_employee_id_foreign FOREIGN KEY (employee_id) REFERENCES employees (id) ON DELETE CASCADE
-);
+CREATE TABLE IF NOT EXISTS `accesses` (
+    `id` bigint(20) NOT NULL AUTO_INCREMENT,
+    `id_role` int(11) NOT NULL,
+    `id_menu` int(11) NOT NULL,
+    `read` varchar(16) DEFAULT NULL,
+    `view` varchar(16) DEFAULT NULL,
+    `create` varchar(16) DEFAULT NULL,
+    `update` varchar(16) DEFAULT NULL,
+    `delete` varchar(16) DEFAULT NULL,
+    `publish` varchar(16) DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `unik` (`id_role`, `id_menu`),
+    KEY `web_level_admin_menus_ibfk_1` (`id_menu`),
+    CONSTRAINT `id_menu_fk` FOREIGN KEY (`id_menu`) REFERENCES `menus` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT `id_role_fk` FOREIGN KEY (`id_role`) REFERENCES `roles` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_520_nopad_ci;
 
-CREATE TABLE parent_data (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    employee_id CHAR(36) NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP NULL,
-    updated_at TIMESTAMP NULL,
-    CONSTRAINT parent_data_employee_id_foreign FOREIGN KEY (employee_id) REFERENCES employees (id) ON DELETE CASCADE
-);
+CREATE TABLE IF NOT EXISTS `sessions` (
+    `id` varchar(255) NOT NULL,
+    `user_id` bigint(20) unsigned DEFAULT NULL,
+    `ip_address` varchar(45) DEFAULT NULL,
+    `user_agent` text DEFAULT NULL,
+    `payload` longtext NOT NULL,
+    `last_activity` int(11) NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `sessions_user_id_index` (`user_id`),
+    KEY `sessions_last_activity_index` (`last_activity`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
-CREATE TABLE child_data (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    parent_id BIGINT UNSIGNED NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP NULL,
-    updated_at TIMESTAMP NULL,
-    CONSTRAINT child_data_parent_id_foreign FOREIGN KEY (parent_id) REFERENCES parent_data (id) ON DELETE CASCADE ON UPDATE CASCADE
-);
+CREATE TABLE `employee_educations` (
+    `id` CHAR(36) PRIMARY KEY,
+    `employee_id` CHAR(36) NOT NULL,
+    `level` VARCHAR(255) NOT NULL,
+    `institution` VARCHAR(255) NOT NULL,
+    `major` VARCHAR(255) NULL,
+    `graduation_year` YEAR NULL,
+    `created_at` TIMESTAMP NULL,
+    `updated_at` TIMESTAMP NULL,
+    CONSTRAINT `employee_educations_employee_id_foreign` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_520_nopad_ci;
 
-CREATE TABLE transport_settings (
-    id CHAR(36) PRIMARY KEY,
-    base_fare DECIMAL(15, 2) DEFAULT 0 NOT NULL,
-    created_by CHAR(36) NULL,
-    updated_by CHAR(36) NULL,
-    created_at TIMESTAMP NULL,
-    updated_at TIMESTAMP NULL,
-    CONSTRAINT transport_settings_created_by_foreign FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL,
-    CONSTRAINT transport_settings_updated_by_foreign FOREIGN KEY (updated_by) REFERENCES users (id) ON DELETE SET NULL
-);
+CREATE TABLE `parent_data` (
+    `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `employee_id` CHAR(36) NOT NULL,
+    `name` VARCHAR(255) NOT NULL,
+    `created_at` TIMESTAMP NULL,
+    `updated_at` TIMESTAMP NULL,
+    CONSTRAINT `parent_data_employee_id_foreign` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_520_nopad_ci;
 
-CREATE TABLE transport_allowances (
-    id CHAR(36) PRIMARY KEY,
-    employee_id CHAR(36) NOT NULL,
-    month TINYINT NOT NULL,
-    year INT NOT NULL,
-    base_fare DECIMAL(15, 2) NOT NULL,
-    distance_km DECIMAL(8, 2) NOT NULL,
-    work_days INT NOT NULL,
-    total_amount DECIMAL(15, 2) NOT NULL,
-    notes TEXT NULL,
-    created_by CHAR(36) NULL,
-    updated_by CHAR(36) NULL,
-    created_at TIMESTAMP NULL,
-    updated_at TIMESTAMP NULL,
-    UNIQUE (employee_id, month, year),
-    CONSTRAINT transport_allowances_employee_id_foreign FOREIGN KEY (employee_id) REFERENCES employees (id) ON DELETE CASCADE,
-    CONSTRAINT transport_allowances_created_by_foreign FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL,
-    CONSTRAINT transport_allowances_updated_by_foreign FOREIGN KEY (updated_by) REFERENCES users (id) ON DELETE SET NULL
-);
+CREATE TABLE `child_data` (
+    `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `parent_id` BIGINT UNSIGNED NOT NULL,
+    `name` VARCHAR(255) NOT NULL,
+    `created_at` TIMESTAMP NULL,
+    `updated_at` TIMESTAMP NULL,
+    CONSTRAINT `child_data_parent_id_foreign` FOREIGN KEY (`parent_id`) REFERENCES `parent_data` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_520_nopad_ci;
+
+CREATE TABLE `transport_settings` (
+    `id` CHAR(36) PRIMARY KEY,
+    `base_fare` DECIMAL(15, 2) DEFAULT 0 NOT NULL,
+    `created_by` CHAR(36) NULL,
+    `updated_by` CHAR(36) NULL,
+    `created_at` TIMESTAMP NULL,
+    `updated_at` TIMESTAMP NULL,
+    CONSTRAINT `transport_settings_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT `transport_settings_updated_by_foreign` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_520_nopad_ci;
+
+CREATE TABLE `transport_allowances` (
+    `id` CHAR(36) PRIMARY KEY,
+    `employee_id` CHAR(36) NOT NULL,
+    `month` TINYINT NOT NULL,
+    `year` INT NOT NULL,
+    `base_fare` DECIMAL(15, 2) NOT NULL,
+    `distance_km` DECIMAL(8, 2) NOT NULL,
+    `work_days` INT NOT NULL,
+    `total_amount` DECIMAL(15, 2) NOT NULL,
+    `notes` TEXT NULL,
+    `created_by` CHAR(36) NULL,
+    `updated_by` CHAR(36) NULL,
+    `created_at` TIMESTAMP NULL,
+    `updated_at` TIMESTAMP NULL,
+    UNIQUE (
+        `employee_id`,
+        `month`,
+        `year`
+    ),
+    CONSTRAINT `transport_allowances_employee_id_foreign` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT `transport_allowances_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT `transport_allowances_updated_by_foreign` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_520_nopad_ci;
+
+CREATE TABLE IF NOT EXISTS `file` (
+    `id` bigint(20) NOT NULL AUTO_INCREMENT,
+    `name` varchar(256) NOT NULL,
+    `mime` varchar(256) NOT NULL,
+    `size` varchar(32) NOT NULL,
+    `path` text NOT NULL,
+    `parent_id` bigint(20) NOT NULL,
+    `parent_table` varchar(256) NOT NULL,
+    `parent_field` varchar(256) NOT NULL,
+    `created_at` datetime DEFAULT NULL,
+    `updated_at` datetime DEFAULT NULL,
+    `created_by` CHAR(36) DEFAULT NULL,
+    `updated_by` CHAR(36) DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    KEY `created_by` (`created_by`),
+    KEY `updated_by` (`updated_by`),
+    KEY `index` (
+        `parent_id`,
+        `parent_table`,
+        `parent_field`
+    ) USING BTREE,
+    CONSTRAINT `file_ibfk_1` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT `file_ibfk_2` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_520_nopad_ci;
+
+SET foreign_key_checks = 1;

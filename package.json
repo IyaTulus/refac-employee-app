@@ -1,0 +1,27 @@
+{
+    "$schema": "https://www.schemastore.org/package.json",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "build": "vite build",
+        "dev": "vite"
+    },
+    "devDependencies": {
+        "@vitejs/plugin-vue": "^5.0.0",
+        "bootstrap": "~5",
+        "bootstrap-icons": "~1",
+        "laravel-vite-plugin": "^1.0.0",
+        "less": "~4",
+        "vite": "^5.0.0"
+    },
+    "dependencies": {
+        "@tabler/core": "~1.0.0-beta24",
+        "axios": "^1.16.1",
+        "jquery": "~3",
+        "select2": "~4",
+        "select2-bootstrap-5-theme": "~1"
+    },
+    "overrides": {
+        "bootstrap": "$bootstrap"
+    }
+}

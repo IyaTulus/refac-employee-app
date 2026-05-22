@@ -26,8 +26,7 @@
             <div class="col-lg-4">
                 <div class="card mb-4 border-0 shadow-sm">
                     <div class="card-body p-4 text-center">
-                        <img src="{{ $employee->photo ? asset('storage/' . $employee->photo) : 'https://via.placeholder.com/200x200?text=No+Photo' }}"
-                            class="img-thumbnail rounded-circle mb-3"
+                        <img src="{{ $employee->photo_url }}" class="img-thumbnail rounded-circle mb-3"
                             style="width: 150px; height: 150px; object-fit: cover;">
                         <h5 class="fw-bold mb-1">{{ $employee->full_name }}</h5>
                         <p class="text-muted small mb-3">{{ $employee->employee_code }}</p>
@@ -107,6 +106,20 @@
                             <div class="col-6 col-md-4">
                                 <p class="small text-muted mb-1">Jabatan</p>
                                 <p class="fw-bold text-capitalize">{{ $employee->position }}</p>
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <p class="small text-muted mb-1">Status Kepegawaian</p>
+                                <p class="fw-bold">
+                                    @php
+                                        $statusLabel = match ($employee->employment_status) {
+                                            'permanent' => 'Pegawai Tetap',
+                                            'contract' => 'Pegawai Kontrak',
+                                            'intern' => 'Pegawai Magang',
+                                            default => 'Belum Diisi',
+                                        };
+                                    @endphp
+                                    {{ $statusLabel }}
+                                </p>
                             </div>
                             <div class="col-6 col-md-4">
                                 <p class="small text-muted mb-1">Departemen</p>

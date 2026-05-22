@@ -7,10 +7,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
+use jeemce\models\Fileable;
 
 class Employee extends Model
 {
-    use HasUuids, HasFactory;
+    use HasUuids, HasFactory, Fileable;
 
     protected $fillable = [
         'photo',
@@ -42,6 +44,7 @@ class Employee extends Model
         'resign_date' => 'date',
         'is_active' => 'boolean',
         'children_count' => 'integer',
+        'distance_km' => 'decimal:2',
     ];
 
     /**
@@ -58,6 +61,60 @@ class Employee extends Model
     public function getAgeAttribute(): int
     {
         return (int) $this->birth_date->diffInYears(now());
+    }
+
+    public function getHasPhotoAttribute(): bool
+    {
+        $vendorPhoto = $this->file('photo');
+        if (!empty($vendorPhoto->id) && $vendorPhoto->exist()) {
+            return true;
+        }
+
+        if (empty($this->photo)) {
+            return false;
+        }
+
+        $photoPath = ltrim((string) $this->photo, '/');
+
+        if (Storage::disk('public')->exists($photoPath)) {
+            return true;
+        }
+
+        if (str_starts_with($photoPath, 'storage/')) {
+            $normalizedPath = substr($photoPath, strlen('storage/'));
+
+            return $normalizedPath !== '' && Storage::disk('public')->exists($normalizedPath);
+        }
+
+        return false;
+    }
+
+    public function getPhotoUrlAttribute(): string
+    {
+        $vendorPhoto = $this->file('photo');
+        if (!empty($vendorPhoto->id) && $vendorPhoto->exist()) {
+            return $vendorPhoto->url();
+        }
+
+        if (empty($this->photo)) {
+            return 'https://via.placeholder.com/150x150?text=No+Photo';
+        }
+
+        $photoPath = ltrim((string) $this->photo, '/');
+
+        if (Storage::disk('public')->exists($photoPath)) {
+            return asset('storage/' . $photoPath);
+        }
+
+        if (str_starts_with($photoPath, 'storage/')) {
+            $normalizedPath = substr($photoPath, strlen('storage/'));
+
+            if ($normalizedPath !== '' && Storage::disk('public')->exists($normalizedPath)) {
+                return asset('storage/' . $normalizedPath);
+            }
+        }
+
+        return 'https://via.placeholder.com/150x150?text=No+Photo';
     }
 
     public function user(): HasOne

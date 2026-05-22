@@ -15,6 +15,7 @@
         "vite": "^5.0.0"
     },
     "dependencies": {
+        "@fortawesome/fontawesome-free": "^7.2.0",
         "@tabler/core": "~1.0.0-beta24",
         "axios": "^1.16.1",
         "jquery": "~3",

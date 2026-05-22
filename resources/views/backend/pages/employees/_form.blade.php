@@ -165,6 +165,17 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
+                    <div class="col-md-4">
+                        <label class="form-label required small fw-bold">Jarak ke Kantor (Km)</label>
+                        <input type="number" name="distance_km" step="0.01" min="0"
+                            class="form-control @error('distance_km') is-invalid @enderror"
+                            value="{{ old('distance_km', $employee->distance_km ?? 0) }}"
+                            placeholder="Contoh: 12.50">
+                        @error('distance_km')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                        <div class="form-hint">Diisi manual berdasarkan jarak rumah pegawai ke kantor.</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -234,13 +245,13 @@
             </div>
             <div class="card-body p-4 text-center">
                 <div class="mb-3">
-                    <img id="photoPreview"
-                        src="{{ isset($employee) && $employee->photo ? asset('storage/' . $employee->photo) : 'https://via.placeholder.com/150x150?text=No+Photo' }}"
-                        class="img-thumbnail rounded" style="width: 150px; height: 150px; object-fit: cover;">
+                    <img id="photoPreview" src="{{ $employee->photo_url }}" class="img-thumbnail rounded"
+                        style="width: 150px; height: 150px; object-fit: cover;">
                 </div>
-                <input type="file" name="photo" id="photoInput"
-                    class="form-control form-control-sm @error('photo') is-invalid @enderror" accept="image/*">
-                @error('photo')
+                <input type="file" name="upload_photo" id="photoInput"
+                    class="form-control form-control-sm @error('upload_photo') is-invalid @enderror"
+                    accept="image/*">
+                @error('upload_photo')
                     <div class="invalid-feedback text-start">{{ $message }}</div>
                 @enderror
                 <p class="small text-muted mt-2">Format: PNG, JPG, JPEG. Max: 2MB</p>
@@ -262,6 +273,19 @@
                         <option value="magang" @selected(old('position', $employee->position ?? '') === 'magang')>Magang</option>
                     </select>
                     @error('position')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+                <div class="mb-3">
+                    <label class="form-label required small fw-bold">Status Kepegawaian</label>
+                    <select name="employment_status"
+                        class="form-select @error('employment_status') is-invalid @enderror">
+                        <option value="">-- Pilih Status --</option>
+                        <option value="permanent" @selected(old('employment_status', $employee->employment_status ?? '') === 'permanent')>Pegawai Tetap</option>
+                        <option value="contract" @selected(old('employment_status', $employee->employment_status ?? '') === 'contract')>Pegawai Kontrak</option>
+                        <option value="intern" @selected(old('employment_status', $employee->employment_status ?? '') === 'intern')>Pegawai Magang</option>
+                    </select>
+                    @error('employment_status')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>

@@ -1,4 +1,186 @@
 @import "@tabler/core/dist/css/tabler.css";
 @import 'bootstrap-icons/font/bootstrap-icons.css';
+@import '@fortawesome/fontawesome-free/css/all.min.css';
 @import '../../vendor/jeemce/laravel/assets/main.less';
 @import '../../vendor/jeemce/laravel-theme-admin-v5/assets/theme.less';
+
+
+.card-enterprise {
+	border-radius: 1rem;
+	overflow: hidden;
+}
+
+.btn-enterprise-primary {
+	background: var(--theme-color);
+	border-color: var(--theme-color);
+	color: #fff;
+	box-shadow: 0 0.25rem 0.75rem rgba(33, 106, 196, 0.18);
+}
+
+.btn-enterprise-primary:hover,
+.btn-enterprise-primary:focus {
+	background: var(--theme-hover-color);
+	border-color: var(--theme-hover-color);
+	color: #fff;
+}
+
+.table-enterprise {
+	--tblr-table-color: inherit;
+	--tblr-table-bg: transparent;
+}
+
+.empty-state {
+	padding: 1.5rem 1rem;
+	text-align: center;
+}
+
+.empty-state i {
+	font-size: 2rem;
+	opacity: .5;
+}
+
+.navbar-profile-toggle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: .15rem;
+	border-radius: 999px;
+	background: transparent;
+	border: none;
+	gap: .5rem;
+	min-height: auto;
+	transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease;
+}
+
+.navbar-profile-toggle:hover {
+    background-color: #489ff7;
+}
+
+.avatar-circle {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    overflow: hidden;
+}
+
+.navbar-notify-toggle {
+    width: 42px;
+    height: 42px;
+    transition: all 0.2s ease;
+}
+
+.navbar-notify-toggle:hover {
+    background-color: #f8f9fa;
+    transform: translateY(-1px);
+}
+
+.navbar-notify-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    font-size: 11px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    box-shadow: 0 0 0 2px white;
+}
+
+.navbar-profile-toggle:hover,
+.navbar-profile-toggle:focus {
+	background: rgba(33, 106, 196, .04);
+	box-shadow: 0 .24rem .6rem rgba(33, 106, 196, .08);
+	transform: translateY(-1px);
+}
+
+.navbar-profile-avatar {
+	width: 2.6rem;
+	height: 2.6rem;
+	flex: 0 0 auto;
+	font-size: .95rem;
+	font-weight: 700;
+	letter-spacing: .6px;
+	border: 1px solid rgba(0,0,0,.06);
+	background-image: linear-gradient(135deg, rgba(33,106,196,0.12), rgba(33,106,196,0.2));
+	box-shadow: 0 .12rem .32rem rgba(16,24,40,0.06);
+}
+
+.navbar-profile-role {
+	line-height: 1;
+}
+
+.navbar-profile-caret {
+	font-size: .75rem;
+	opacity: .7;
+}
+
+.navbar-notify-toggle.dropdown-toggle::after {
+	display: none;
+}
+
+.navbar-profile-toggle.dropdown-toggle::after {
+	display: inline-block;
+	margin-left: .35rem;
+	vertical-align: 0.15rem;
+}
+
+.navbar-profile-menu,
+.navbar-notify-menu {
+	min-width: 18rem;
+	border-radius: 1rem;
+	backdrop-filter: blur(10px);
+}
+
+/* focus-visible for accessibility */
+.navbar-profile-toggle:focus-visible {
+	outline: none;
+	box-shadow: 0 0 0 3px rgba(33,106,196,0.12), 0 .24rem .6rem rgba(33,106,196,0.06);
+}
+
+.navbar-profile-menu .dropdown-item,
+.navbar-notify-menu .dropdown-item {
+	border-radius: .75rem;
+	padding: .75rem .9rem;
+}
+
+.navbar-profile-menu .dropdown-item:hover,
+.navbar-notify-menu .dropdown-item:hover {
+	background: rgba(33, 106, 196, .08);
+}
+
+.navbar-notify-toggle {
+	position: relative;
+	padding: .5rem .75rem;
+	border-radius: 999px;
+	background: transparent;
+	border: none;
+	min-height: 2.5rem;
+}
+
+.navbar-notify-icon {
+	font-size: 1rem;
+}
+
+.navbar-notify-badge {
+	position: absolute;
+	top: .15rem;
+	right: .25rem;
+	transform: translate(45%, -35%);
+	font-size: .65rem;
+	line-height: 1;
+	padding: .28rem .42rem;
+	box-shadow: 0 .2rem .5rem rgba(220, 53, 69, .25);
+}
+
+.navbar-notify-item {
+	white-space: normal;
+	line-height: 1.35;
+}

@@ -13,6 +13,7 @@ use App\Models\EmployeeEducation;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File as FileFacade;
 
 class EmployeeController extends Controller
 {
@@ -87,29 +88,43 @@ class EmployeeController extends Controller
         $query = $this->buildFilteredQuery($request);
         $employees = $query->get();
 
-        $filename = 'employees_' . now()->format('Ymd_His') . '.csv';
+        $filename = 'employees_' . now()->format('Ymd_His') . '.xls';
 
         $response = new StreamedResponse(function () use ($employees) {
-            $handle = fopen('php://output', 'w');
-            // header
-            fputcsv($handle, ['NIP', 'Nama', 'Jabatan', 'Departemen', 'Tanggal Masuk', 'Masa Kerja (Tahun)', 'Email', 'Telepon']);
+            echo '<table border="1">';
+            echo '<thead><tr>';
+            echo '<th>NIP</th>';
+            echo '<th>Nama</th>';
+            echo '<th>Jabatan</th>';
+            echo '<th>Departemen</th>';
+            echo '<th>Tanggal Masuk</th>';
+            echo '<th>Masa Kerja (Tahun)</th>';
+            echo '<th>Email</th>';
+            echo '<th>Telepon</th>';
+            echo '</tr></thead>';
+            echo '<tbody>';
+
             foreach ($employees as $emp) {
-                fputcsv($handle, [
-                    $emp->employee_code,
-                    $emp->full_name,
-                    $emp->position,
-                    $emp->department,
-                    $emp->join_date?->format('Y-m-d'),
-                    $emp->tenure,
-                    $emp->email,
-                    $emp->phone,
-                ]);
+                echo '<tr>';
+                echo '<td>' . e($emp->employee_code) . '</td>';
+                echo '<td>' . e($emp->full_name) . '</td>';
+                echo '<td>' . e($emp->position) . '</td>';
+                echo '<td>' . e($emp->department) . '</td>';
+                echo '<td>' . e($emp->join_date?->format('Y-m-d')) . '</td>';
+                echo '<td>' . e($emp->tenure) . '</td>';
+                echo '<td>' . e($emp->email) . '</td>';
+                echo '<td>' . e($emp->phone) . '</td>';
+                echo '</tr>';
             }
-            fclose($handle);
+
+            echo '</tbody>';
+            echo '</table>';
         });
 
-        $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
+        $response->headers->set('Content-Type', 'application/vnd.ms-excel; charset=UTF-8');
         $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
+        $response->headers->set('Pragma', 'no-cache');
+        $response->headers->set('Expires', '0');
 
         return $response;
     }
@@ -145,6 +160,13 @@ class EmployeeController extends Controller
         foreach ($employees as $emp) {
             $this->validateAccess('delete', $emp);
             $emp->educations()->delete();
+            $file = $emp->file('photo');
+            if (!empty($file->id)) {
+                if ($file->hasFile()) {
+                    FileFacade::delete($file->path());
+                }
+                $file->delete();
+            }
             if ($emp->photo) Storage::disk('public')->delete($emp->photo);
             $emp->delete();
         }
@@ -205,15 +227,12 @@ class EmployeeController extends Controller
         return view('backend.pages.employees.create', compact('employee'));
     }
 
-    public function store(\Illuminate\Http\Request $request)
+    public function store(\App\Http\Requests\Employee\StoreEmployeeRequest $request)
     {
-        $validated = $request->validate((new \App\Http\Requests\Employee\StoreEmployeeRequest())->rules());
+        $validated = $request->validated();
 
         $employee = new Employee();
         $employee->id = (string) Str::uuid();
-        if ($request->hasFile('photo')) {
-            $employee->photo = $request->file('photo')->store('employees', 'public');
-        }
         $employee->employee_code = $validated['employee_code'];
         $employee->full_name = $validated['full_name'];
         $employee->email = $validated['email'];
@@ -226,8 +245,10 @@ class EmployeeController extends Controller
         $employee->kecamatan = $validated['kecamatan'];
         $employee->kabupaten = $validated['kabupaten'];
         $employee->provinsi = $validated['provinsi'];
+        $employee->distance_km = $validated['distance_km'];
         $employee->address = $validated['address'];
         $employee->position = $validated['position'];
+        $employee->employment_status = $validated['employment_status'];
         $employee->department = $validated['department'];
         $employee->join_date = $validated['join_date'];
         $employee->resign_date = $validated['resign_date'] ?? null;
@@ -266,15 +287,7 @@ class EmployeeController extends Controller
         // local phone format starting with 0
         $rules['phone'] = ['required', 'string', 'max:20', Rule::unique('employees', 'phone')->ignore($employee->id), 'regex:/^0\d{9,13}$/'];
 
-        $validated = $request->validate($rules);
-
-        if ($request->hasFile('photo')) {
-            // remove old photo if exists
-            if ($employee->photo) {
-                Storage::disk('public')->delete($employee->photo);
-            }
-            $employee->photo = $request->file('photo')->store('employees', 'public');
-        }
+        $validated = $request->validate($rules, (new \App\Http\Requests\Employee\StoreEmployeeRequest())->messages());
 
         $employee->employee_code = $validated['employee_code'];
         $employee->full_name = $validated['full_name'];
@@ -288,8 +301,10 @@ class EmployeeController extends Controller
         $employee->kecamatan = $validated['kecamatan'];
         $employee->kabupaten = $validated['kabupaten'];
         $employee->provinsi = $validated['provinsi'];
+        $employee->distance_km = $validated['distance_km'];
         $employee->address = $validated['address'];
         $employee->position = $validated['position'];
+        $employee->employment_status = $validated['employment_status'];
         $employee->department = $validated['department'];
         $employee->join_date = $validated['join_date'];
         $employee->resign_date = $validated['resign_date'] ?? null;
@@ -315,6 +330,13 @@ class EmployeeController extends Controller
 
         // Remove related educations and photo
         $employee->educations()->delete();
+        $file = $employee->file('photo');
+        if (!empty($file->id)) {
+            if ($file->hasFile()) {
+                FileFacade::delete($file->path());
+            }
+            $file->delete();
+        }
         if ($employee->photo) {
             Storage::disk('public')->delete($employee->photo);
         }

@@ -1,25 +1,33 @@
-<!DOCTYPE html>
-<html lang="id">
+@php
+    $title = trim($__env->yieldContent('title')) ?: $title ?? config('app.name', 'My App');
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'My App')</title>
-    @vite('resources/assets/frontend.ts')
-    @vite('resources/assets/frontend.less')
-    @vite('resources/assets/backend.less')
-    @vite('resources/assets/backend.ts')
+    $menuMap = [
+        'Dashboard' => ['Dashboard', ''],
+        'Kelola Pengguna' => ['Employees', ''],
+        'Kelola Tunjangan Transport' => ['HR', 'Transport Allowances'],
+        'Setting Tunjangan' => ['HR', 'Settings'],
+    ];
 
-</head>
+    $pageTitle ??= $title;
 
-<body>
-    <div class="d-flex">
-        @include('backend.layouts.partials.sidebar')
+    if (!isset($pageMenu) || $pageMenu === $title) {
+        $pageMenu = $menuMap[$title][0] ?? $title;
+        $pageSubMenu = $menuMap[$title][1] ?? ($pageSubMenu ?? '');
+    }
 
-        <main class="flex-grow-1 p-4">
-            @yield('content')
-        </main>
-    </div>
-</body>
+    $pageSubMenu ??= '';
+@endphp
 
-</html>
+@extends('backend/layouts/main', get_defined_vars())
+
+@section('styles')
+    @stack('styles')
+@endsection
+
+@section('content')
+    @yield('content')
+@endsection
+
+@section('scripts')
+    @stack('scripts')
+@endsection

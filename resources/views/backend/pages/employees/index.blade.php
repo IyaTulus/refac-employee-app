@@ -12,20 +12,14 @@
             <a href="{{ route('employees.create') }}" class="btn btn-enterprise-primary d-flex align-items-center gap-2">
                 <i class="bi bi-plus-lg"></i> <span>Tambah Pegawai</span>
             </a>
-            <div class="dropdown">
-                <button class="btn btn-light d-flex align-items-center dropdown-toggle gap-2 border" type="button"
-                    data-bs-toggle="dropdown">
-                    <i class="bi bi-download"></i> Ekspor Data
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end mt-1 border-0 shadow-sm">
-                    <li><a class="dropdown-item d-flex align-items-center gap-2 py-2"
-                            href="{{ route('employees.export.excel', request()->query()) }}"><i
-                                class="bi bi-file-earmark-spreadsheet text-success"></i> Ekspor Excel</a></li>
-                    <li><a class="dropdown-item d-flex align-items-center gap-2 py-2"
-                            href="{{ route('employees.export.pdf', request()->query()) }}"><i
-                                class="bi bi-file-earmark-pdf text-danger"></i> Ekspor PDF</a></li>
-                </ul>
-            </div>
+            <a href="{{ route('employees.export.excel', request()->query()) }}"
+                class="btn btn-light d-flex align-items-center gap-2 border">
+                <i class="bi bi-file-earmark-spreadsheet text-success"></i> <span>Ekspor Excel</span>
+            </a>
+            <a href="{{ route('employees.export.pdf', request()->query()) }}"
+                class="btn btn-light d-flex align-items-center gap-2 border">
+                <i class="bi bi-file-earmark-pdf text-danger"></i> <span>Ekspor PDF</span>
+            </a>
         </div>
     </div>
 
@@ -142,6 +136,7 @@
                                     : '<i class="bi bi-arrow-down-up ms-1 text-muted" style="opacity:0.3; font-size:0.65rem;"></i>' !!}
                             </a>
                         </th>
+                        <th>STATUS PEGAWAI</th>
                         <th>
                             <a href="{{ request()->fullUrlWithQuery(['sort' => 'join_date', 'order' => request('order') === 'asc' ? 'desc' : 'asc']) }}"
                                 class="text-decoration-none text-muted d-flex align-items-center">
@@ -177,8 +172,8 @@
                                     style="font-size:0.85rem;">{{ $employee->employee_code }}</span></td>
                             <td>
                                 <div class="d-flex align-items-center gap-3">
-                                    @if ($employee->photo)
-                                        <img src="{{ asset('storage/' . $employee->photo) }}"
+                                    @if ($employee->has_photo)
+                                        <img src="{{ $employee->photo_url }}"
                                             class="rounded-circle object-fit-cover border shadow-sm" width="32"
                                             height="32" alt="">
                                     @else
@@ -202,6 +197,24 @@
                                 <span
                                     class="badge badge-enterprise {{ $posStyle }} border">{{ ucfirst($employee->position) }}</span>
                             </td>
+                            <td>
+                                @php
+                                    $statusStyle = match ($employee->employment_status) {
+                                        'permanent' => 'bg-success-subtle text-success border-success-subtle',
+                                        'contract' => 'bg-warning-subtle text-warning border-warning-subtle',
+                                        'intern' => 'bg-secondary-subtle text-secondary border-secondary-subtle',
+                                        default => 'bg-light text-dark border',
+                                    };
+                                    $statusLabel = match ($employee->employment_status) {
+                                        'permanent' => 'Pegawai Tetap',
+                                        'contract' => 'Pegawai Kontrak',
+                                        'intern' => 'Pegawai Magang',
+                                        default => 'Belum Diisi',
+                                    };
+                                @endphp
+                                <span
+                                    class="badge badge-enterprise {{ $statusStyle }} border">{{ $statusLabel }}</span>
+                            </td>
                             <td class="text-muted small"><i class="bi bi-calendar3 me-1"></i>
                                 {{ $employee->join_date->format('d/m/Y') }}</td>
                             <td><span class="fw-medium text-dark">{{ $employee->tenure }}</span> <span
@@ -222,7 +235,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="py-5 text-center">
+                            <td colspan="9" class="py-5 text-center">
                                 <div class="empty-state">
                                     <i class="bi bi-inbox d-block fs-2 text-muted mb-3 opacity-50"></i>
                                     <h6 class="text-muted fw-bold">Data Pegawai Kosong</h6>

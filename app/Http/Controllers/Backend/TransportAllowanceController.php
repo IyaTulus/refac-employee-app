@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
+use App\Models\TransportSetting;
 use App\Models\TransportAllowance;
 use Illuminate\Http\Request;
 use jeemce\controllers\AuthTrait;
@@ -35,8 +36,8 @@ class TransportAllowanceController extends Controller
 
     public function create()
     {
-        $employees = Employee::query()->select(['id', 'employee_code', 'full_name', 'distance_km'])->orderBy('full_name')->get();
-        $baseFare = config('transport.base_fare', 5000); // default
+        $employees = Employee::query()->select(['id', 'employee_code', 'full_name', 'distance_km', 'employment_status'])->orderBy('full_name')->get();
+        $baseFare = TransportSetting::query()->latest()->value('base_fare') ?? 0;
 
         return view('backend.pages.transport-allowances.create', compact('employees', 'baseFare'));
     }
@@ -51,22 +52,18 @@ class TransportAllowanceController extends Controller
         ]);
 
         $employee = Employee::findOrFail($data['employee_id']);
-        $baseFare = config('transport.base_fare', 5000);
-        $distance = $employee->distance_km ?? 0;
+        $baseFare = TransportSetting::query()->latest()->value('base_fare') ?? 0;
+        $result = $this->evaluateTransportAllowance($employee, (int) $data['work_days'], (float) $baseFare);
 
-        // simple rule: if distance <= 0 then total 0, else baseFare * work_days
-        $subtotal = $baseFare; // per day
-        $total = $distance > 0 ? ($subtotal * $data['work_days']) : 0;
-
-        $allowance = TransportAllowance::create([
+        TransportAllowance::create([
             'employee_id' => $employee->id,
             'month' => $data['month'],
             'year' => $data['year'],
-            'base_fare' => $subtotal,
-            'distance_km' => $distance,
+            'base_fare' => $result['base_fare'],
+            'distance_km' => $result['counted_distance_km'],
             'work_days' => $data['work_days'],
-            'total_amount' => $total,
-            'notes' => $distance > 0 ? 'Layak' : 'Jarak tidak mencukupi',
+            'total_amount' => $result['total_amount'],
+            'notes' => $result['notes'],
             'created_by' => auth()->id(),
         ]);
 
@@ -80,5 +77,45 @@ class TransportAllowanceController extends Controller
         $allowance->delete();
 
         return redirect()->back()->with('success', 'Data tunjangan berhasil dihapus.');
+    }
+
+    private function evaluateTransportAllowance(Employee $employee, int $workDays, float $baseFare): array
+    {
+        $actualDistance = (float) ($employee->distance_km ?? 0);
+        $countedDistance = min(max($actualDistance, 0), 25);
+        $isPermanent = $employee->employment_status === 'permanent';
+        $meetsWorkDays = $workDays >= 19;
+        $meetsDistance = $countedDistance > 5;
+
+        $notes = [];
+
+        if (!$isPermanent) {
+            $notes[] = 'Tidak layak: pegawai non-tetap.';
+        }
+
+        if (!$meetsWorkDays) {
+            $notes[] = 'Tidak layak: minimal 19 hari kerja.';
+        }
+
+        if ($actualDistance <= 5) {
+            $notes[] = 'Tidak layak: jarak minimal harus lebih dari 5 km.';
+        }
+
+        if ($actualDistance > 25) {
+            $notes[] = 'Jarak dibatasi maksimal 25 km.';
+        }
+
+        $isEligible = $isPermanent && $meetsWorkDays && $meetsDistance;
+
+        return [
+            'base_fare' => $baseFare,
+            'actual_distance_km' => $actualDistance,
+            'counted_distance_km' => $countedDistance,
+            'is_eligible' => $isEligible,
+            'total_amount' => $isEligible ? ($baseFare * $workDays) : 0,
+            'notes' => $isEligible
+                ? ($actualDistance > 25 ? 'Layak: jarak dihitung maksimal 25 km.' : 'Layak')
+                : implode(' ', $notes),
+        ];
     }
 }

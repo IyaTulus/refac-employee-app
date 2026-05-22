@@ -31,6 +31,7 @@
                                     <option value="">-- Pilih Pegawai --</option>
                                     @foreach ($employees as $emp)
                                         <option value="{{ $emp->id }}" data-distance="{{ $emp->distance_km }}"
+                                            data-status="{{ $emp->employment_status }}"
                                             {{ old('employee_id') == $emp->id ? 'selected' : '' }}>
                                             {{ $emp->employee_code }} - {{ $emp->full_name }}
                                         </option>
@@ -78,7 +79,7 @@
                                     class="form-label text-muted small fw-semibold text-uppercase letter-spacing-1">Jumlah
                                     Hari Masuk</label>
                                 <div class="input-group">
-                                    <input type="number" name="work_days"
+                                    <input type="number" name="work_days" id="work_days"
                                         class="form-control border-end-0 @error('work_days') is-invalid @enderror"
                                         value="{{ old('work_days') }}" min="0" max="31" required>
                                     <span class="input-group-text bg-light text-muted">Hari</span>
@@ -111,8 +112,7 @@
 
         <!-- Preview / Informasi Pegawai -->
         <div class="col-lg-4">
-            <div
-                class="card card-enterprise h-100 bg-primary-subtle text-primary border-primary-subtle border border-0 shadow-sm">
+            <div class="card card-enterprise h-100 bg-primary-subtle text-primary border-primary-subtle border shadow-sm">
                 <div class="card-body d-flex flex-column justify-content-center p-4 text-center">
                     <i class="bi bi-geo-alt-fill mb-3" style="font-size: 3rem;"></i>
                     <h5 class="fw-bold text-dark mb-3">Data Jarak Pegawai</h5>
@@ -126,6 +126,14 @@
                             PILIH PEGAWAI</div>
                         <div class="fs-1 fw-bold text-dark d-flex align-items-center justify-content-center gap-2">
                             <span id="distPreview">0</span> <span class="fs-5 text-muted fw-normal mt-2">KM</span>
+                        </div>
+                        <div class="mt-3">
+                            <span class="badge rounded-pill bg-secondary-subtle text-secondary border"
+                                id="statusPreview">Belum
+                                Dihitung</span>
+                        </div>
+                        <div class="small text-muted lh-sm mt-2" id="reasonPreview">
+                            Pilih pegawai dan isi jumlah hari kerja untuk melihat status kelayakan.
                         </div>
                     </div>
 
@@ -145,19 +153,61 @@
                 const sel = document.getElementById('employee_id');
                 const distPreview = document.getElementById('distPreview');
                 const empNamePreview = document.getElementById('empNamePreview');
+                const workDaysInput = document.getElementById('work_days');
+                const statusPreview = document.getElementById('statusPreview');
+                const reasonPreview = document.getElementById('reasonPreview');
 
-                sel.addEventListener('change', function() {
-                    const selectedOpt = this.options[this.selectedIndex];
-                    if (selectedOpt.value) {
-                        const dist = selectedOpt.getAttribute('data-distance');
-                        const text = selectedOpt.text.split('-')[1].trim();
-                        distPreview.textContent = dist;
-                        empNamePreview.textContent = text.toUpperCase();
-                    } else {
+                const evaluateStatus = () => {
+                    const selectedOpt = sel.options[sel.selectedIndex];
+                    const workDays = parseInt(workDaysInput.value || '0', 10);
+
+                    if (!selectedOpt || !selectedOpt.value) {
                         distPreview.textContent = '0';
                         empNamePreview.textContent = 'PILIH PEGAWAI';
+                        statusPreview.textContent = 'Belum Dihitung';
+                        statusPreview.className = 'badge rounded-pill bg-secondary-subtle text-secondary border';
+                        reasonPreview.textContent =
+                            'Pilih pegawai dan isi jumlah hari kerja untuk melihat status kelayakan.';
+                        return;
                     }
+
+                    const dist = parseFloat(selectedOpt.getAttribute('data-distance') || '0');
+                    const countedDistance = Math.min(Math.max(dist, 0), 25);
+                    const employmentStatus = selectedOpt.getAttribute('data-status');
+                    const text = selectedOpt.text.split('-')[1].trim();
+                    const isPermanent = employmentStatus === 'permanent';
+                    const meetsWorkDays = workDays >= 19;
+                    const meetsDistance = countedDistance > 5;
+                    const isEligible = isPermanent && meetsWorkDays && meetsDistance;
+
+                    distPreview.textContent = countedDistance.toFixed(countedDistance % 1 === 0 ? 0 : 2);
+                    empNamePreview.textContent = text.toUpperCase();
+
+                    if (isEligible) {
+                        statusPreview.textContent = 'Layak';
+                        statusPreview.className =
+                            'badge rounded-pill bg-success-subtle text-success border border-success-subtle';
+                        reasonPreview.textContent = dist > 25 ?
+                            'Layak. Jarak dibatasi maksimal 25 km.' :
+                            'Layak. Pegawai tetap, minimal 19 hari kerja, dan jarak di atas 5 km.';
+                    } else {
+                        const reasons = [];
+                        if (!isPermanent) reasons.push('pegawai harus tetap');
+                        if (!meetsWorkDays) reasons.push('minimal 19 hari kerja');
+                        if (!meetsDistance) reasons.push('jarak harus lebih dari 5 km');
+
+                        statusPreview.textContent = 'Tidak Layak';
+                        statusPreview.className =
+                            'badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle';
+                        reasonPreview.textContent = `Tidak layak karena ${reasons.join(', ')}.`;
+                    }
+                };
+
+                sel.addEventListener('change', function() {
+                    evaluateStatus();
                 });
+
+                workDaysInput.addEventListener('input', evaluateStatus);
 
                 // Trigger on load for older selection
                 sel.dispatchEvent(new Event('change'));

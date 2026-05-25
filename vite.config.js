@@ -3,6 +3,7 @@ import path from "path";
 import laravel from "laravel-vite-plugin";
 
 export default defineConfig({
+    base: "/refac-employee-app/public/build/",
     // Pre-bundle these deps to avoid resolution issues coming from files
     // located in the sibling monorepo packages.
     optimizeDeps: {
@@ -18,7 +19,9 @@ export default defineConfig({
         }),
     ],
     build: {
-        outDir: "public",
+        outDir: "public/build",
+        manifest: "manifest.json",
+        emptyOutDir: true,
         rollupOptions: {
             output: {
                 entryFileNames: "[name].js",
@@ -35,6 +38,10 @@ export default defineConfig({
         },
     },
     server: {
+        host: "0.0.0.0",
+        hmr: {
+            host: "192.168.56.1",
+        },
         // Allow Vite to serve files from the monorepo packages folder
         // so imports like ../laravel-monorepo/packages/... resolve.
         fs: {

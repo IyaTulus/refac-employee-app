@@ -9,12 +9,15 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use jeemce\controllers\CrudTrait;
 use jeemce\controllers\AuthTrait;
 
 class UserController extends Controller
 {
+    use CrudTrait;
     use AuthTrait;
 
     public function __construct()
@@ -47,91 +50,83 @@ class UserController extends Controller
         return view('backend.pages.users.index', compact('users', 'roles'));
     }
 
-    public function create()
+    public function form(?string $id = null)
     {
-        $user = new User();
+        $user = $id ? $this->findModel(['id' => $id]) : new User();
+
+        if ($id) {
+            $this->validateAccess('update', $user);
+        }
+
         $roles = Role::query()->orderBy('name')->get();
         $employees = Employee::query()
             ->select(['id', 'employee_code', 'full_name'])
             ->orderBy('full_name')
             ->get();
 
-        return view('backend.pages.users.create', compact('user', 'roles', 'employees'));
+        return view($id ? 'backend.pages.users.edit' : 'backend.pages.users.create', compact('user', 'roles', 'employees'));
     }
 
-    public function store(Request $request)
+    public function save(Request $request, ?string $id = null)
     {
-        $validated = $this->validatePayload($request);
+        $user = $id ? $this->findModel(['id' => $id]) : new User();
 
-        $user = new User();
-        $user->id = (string) Str::uuid();
+        if ($id) {
+            $this->validateAccess('update', $user);
+        } else {
+            $this->validateAccess('create', $user);
+        }
+
+        $validated = $this->validatePayload($request, $id ? $user : null);
+
+        if (! $id) {
+            $user->id = (string) Str::uuid();
+        }
+
         $user->employee_id = $validated['employee_id'];
         $user->role_id = $validated['role_id'];
         $user->username = $validated['username'];
         $user->email = $validated['email'];
         $user->phone = $validated['phone'];
-        $user->password = $validated['password'];
-        $user->is_active = $request->boolean('is_active');
+
+        if (! empty($validated['password'])) {
+            $user->password = $validated['password'];
+        }
+
+        $user->is_active = $request->boolean('is_active', $id ? $user->is_active : true);
         $user->save();
 
         return redirect()
             ->route('users.index')
-            ->with('success', 'User berhasil ditambahkan.');
+            ->with('success', $id ? 'User berhasil diperbarui.' : 'User berhasil ditambahkan.');
     }
 
-    public function show(?string $id = null)
+    public function view(?string $id = null)
     {
-        $id ??= (string) auth()->id();
+        $id ??= (string) Auth::id();
+
         return redirect()->route('users.edit', $id);
     }
 
-    public function edit(string $id)
+    public function findModel(array $where)
     {
-        $user = User::query()->with(['employee', 'role'])->findOrFail($id);
-        $this->validateAccess('update', $user);
-
-        $roles = Role::query()->orderBy('name')->get();
-        $employees = Employee::query()
-            ->select(['id', 'employee_code', 'full_name'])
-            ->orderBy('full_name')
-            ->get();
-
-        return view('backend.pages.users.edit', compact('user', 'roles', 'employees'));
+        return User::query()->with(['employee', 'role'])->where($where)->firstOrFail();
     }
 
-    public function update(Request $request, string $id)
+    public function delete($id, Request $request)
     {
-        $user = User::query()->findOrFail($id);
-        $this->validateAccess('update', $user);
-
-        $validated = $this->validatePayload($request, $user);
-
-        $user->employee_id = $validated['employee_id'];
-        $user->role_id = $validated['role_id'];
-        $user->username = $validated['username'];
-        $user->email = $validated['email'];
-        $user->phone = $validated['phone'];
-        if (!empty($validated['password'])) {
-            $user->password = $validated['password'];
-        }
-        $user->is_active = $request->boolean('is_active');
-        $user->save();
-
-        return redirect()
-            ->route('users.index')
-            ->with('success', 'User berhasil diperbarui.');
-    }
-
-    public function destroy(string $id)
-    {
-        $user = User::query()->findOrFail($id);
+        $user = $this->findModel(['id' => $id]);
         $this->validateAccess('delete', $user);
 
-        if ((string) auth()->id() === (string) $user->id) {
+        if ((string) Auth::id() === (string) $user->id) {
             return back()->with('error', 'Anda tidak dapat menghapus akun yang sedang digunakan.');
         }
 
-        $user->delete();
+        $user->deleteOrFail();
+
+        if ($request->ajax()) {
+            return;
+        }
 
         return redirect()
             ->route('users.index')
@@ -143,7 +138,7 @@ class UserController extends Controller
         $user = User::query()->findOrFail($id);
         $this->validateAccess('update', $user);
 
-        if ((string) auth()->id() === (string) $user->id) {
+        if ((string) Auth::id() === (string) $user->id) {
             return back()->with('error', 'Anda tidak dapat menonaktifkan akun yang sedang digunakan.');
         }
 
@@ -211,7 +206,8 @@ class UserController extends Controller
             'password' => ['required', 'confirmed', 'min:6'],
         ]);
 
-        $user = auth()->user();
+        /** @var User $user */
+        $user = Auth::user();
         $user->password = Hash::make($validated['password']);
         $user->save();
 

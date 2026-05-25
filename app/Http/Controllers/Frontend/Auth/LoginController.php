@@ -17,21 +17,22 @@ class LoginController extends Controller
 
     public function store(LoginRequest $request)
     {
+        $captcha = new Captcha();
+
+        if (! $captcha->validate($request->input('captcha'))) {
+            return back()->withErrors(['captcha' => 'Captcha tidak valid']);
+        }
+
         $authenticated = Auth::attempt(
             $request->only('email', 'password'),
             $request->boolean('remember')
         );
 
-        $captcha =  new Captcha();
-        if (! $captcha->validate($request->input('captcha'))) {
-            return back()->withErrors(['captcha' => 'Captcha tidak valid']);
-        }
-
         if (!$authenticated) {
             return back()->withErrors(['email' => 'Invalid credentials']);
         }
 
-        return redirect()->intended(route('admin.dashboard'))->with('success', 'Berhasil login');
+        return redirect()->intended(route('backend.home.index'))->with('success', 'Berhasil login');
     }
 
     public function destroy(Request $request)

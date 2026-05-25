@@ -3,8 +3,10 @@
 namespace App\Providers;
 
 use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use jeemce\captcha\controllers\CaptchaController;
 use jeemce\models\File;
 
 class AppServiceProvider extends ServiceProvider
@@ -22,9 +24,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Route::middleware('web')
+            ->get('captcha', [CaptchaController::class, 'generate'])
+            ->name('captcha.generate');
+
         $vendorThemeViews = base_path('vendor/jeemce/laravel-theme-admin-v5/views');
         if (is_dir($vendorThemeViews)) {
-            View::getFinder()->prependLocation($vendorThemeViews);
+            View::addLocation($vendorThemeViews);
         }
 
         File::creating(function (File $file) {

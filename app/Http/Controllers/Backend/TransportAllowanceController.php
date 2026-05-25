@@ -4,13 +4,16 @@ namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
-use App\Models\TransportSetting;
 use App\Models\TransportAllowance;
+use App\Models\TransportSetting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use jeemce\controllers\AuthTrait;
+use jeemce\controllers\CrudTrait;
 
 class TransportAllowanceController extends Controller
 {
+    use CrudTrait;
     use AuthTrait;
 
     public function __construct()
@@ -25,6 +28,7 @@ class TransportAllowanceController extends Controller
         if ($request->filled('month')) {
             $query->where('month', $request->integer('month'));
         }
+
         if ($request->filled('year')) {
             $query->where('year', $request->integer('year'));
         }
@@ -34,16 +38,35 @@ class TransportAllowanceController extends Controller
         return view('backend.pages.transport-allowances.index', compact('allowances'));
     }
 
-    public function create()
+    public function form(?string $id = null)
     {
-        $employees = Employee::query()->select(['id', 'employee_code', 'full_name', 'distance_km', 'employment_status'])->orderBy('full_name')->get();
+        $allowance = $id ? $this->findModel(['id' => $id]) : new TransportAllowance();
+
+        if ($id) {
+            $this->validateAccess('update', $allowance);
+        } else {
+            $this->validateAccess('create', $allowance);
+        }
+
+        $employees = Employee::query()
+            ->select(['id', 'employee_code', 'full_name', 'distance_km', 'employment_status'])
+            ->orderBy('full_name')
+            ->get();
         $baseFare = TransportSetting::query()->latest()->value('base_fare') ?? 0;
 
-        return view('backend.pages.transport-allowances.create', compact('employees', 'baseFare'));
+        return view('backend.pages.transport-allowances.create', compact('allowance', 'employees', 'baseFare'));
     }
 
-    public function store(Request $request)
+    public function save(Request $request, ?string $id = null)
     {
+        $allowance = $id ? $this->findModel(['id' => $id]) : new TransportAllowance();
+
+        if ($id) {
+            $this->validateAccess('update', $allowance);
+        } else {
+            $this->validateAccess('create', $allowance);
+        }
+
         $data = $request->validate([
             'employee_id' => ['required', 'exists:employees,id'],
             'month' => ['required', 'integer', 'min:1', 'max:12'],
@@ -55,7 +78,7 @@ class TransportAllowanceController extends Controller
         $baseFare = TransportSetting::query()->latest()->value('base_fare') ?? 0;
         $result = $this->evaluateTransportAllowance($employee, (int) $data['work_days'], (float) $baseFare);
 
-        TransportAllowance::create([
+        $payload = [
             'employee_id' => $employee->id,
             'month' => $data['month'],
             'year' => $data['year'],
@@ -64,17 +87,37 @@ class TransportAllowanceController extends Controller
             'work_days' => $data['work_days'],
             'total_amount' => $result['total_amount'],
             'notes' => $result['notes'],
-            'created_by' => auth()->id(),
-        ]);
+            'created_by' => Auth::id(),
+        ];
+
+        if ($allowance->exists) {
+            $allowance->update($payload);
+        } else {
+            $allowance = TransportAllowance::create($payload);
+        }
 
         return redirect()->route('transport-allowances.index')->with('success', 'Perhitungan tunjangan berhasil disimpan.');
     }
 
-    public function destroy(string $id)
+    public function view(string $id)
     {
-        $allowance = TransportAllowance::findOrFail($id);
+        return redirect()->route('transport-allowances.index');
+    }
+
+    public function findModel(array $where)
+    {
+        return TransportAllowance::query()->with('employee')->where($where)->firstOrFail();
+    }
+
+    public function delete($id, Request $request)
+    {
+        $allowance = $this->findModel(['id' => $id]);
         $this->validateAccess('delete', $allowance);
-        $allowance->delete();
+        $allowance->deleteOrFail();
+
+        if ($request->ajax()) {
+            return null;
+        }
 
         return redirect()->back()->with('success', 'Data tunjangan berhasil dihapus.');
     }
@@ -89,11 +132,11 @@ class TransportAllowanceController extends Controller
 
         $notes = [];
 
-        if (!$isPermanent) {
+        if (! $isPermanent) {
             $notes[] = 'Tidak layak: pegawai non-tetap.';
         }
 
-        if (!$meetsWorkDays) {
+        if (! $meetsWorkDays) {
             $notes[] = 'Tidak layak: minimal 19 hari kerja.';
         }
 

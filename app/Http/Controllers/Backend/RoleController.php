@@ -8,10 +8,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use jeemce\controllers\AuthTrait;
+use jeemce\controllers\CrudTrait;
 use jeemce\models\Menu;
 
 class RoleController extends Controller
 {
+    use CrudTrait;
     use AuthTrait;
 
     public function __construct()
@@ -21,92 +23,65 @@ class RoleController extends Controller
 
     public function index()
     {
-        $roles = Role::query()
-            ->orderBy('id')
-            ->paginate(10);
+        $roles = Role::query()->orderBy('id')->paginate(10);
 
         return view('backend.pages.roles.index', compact('roles'));
     }
 
-    public function create()
+    public function form(?string $id = null)
     {
-        $role = new Role();
-        $menus = $this->menuMatrix();
-        $selectedPermissions = [];
+        $role = $id ? $this->findModel(['id' => $id]) : new Role();
 
-        return view('backend.pages.roles.create', compact('role', 'menus', 'selectedPermissions'));
+        if ($id) {
+            $this->validateAccess('update', $role);
+        } else {
+            $this->validateAccess('create', $role);
+        }
+
+        $menus = $this->menuMatrix($role->id ?? null);
+        $selectedPermissions = $role->exists ? $this->selectedPermissions($role->id) : [];
+
+        return view($id ? 'backend.pages.roles.edit' : 'backend.pages.roles.create', compact('role', 'menus', 'selectedPermissions'));
     }
 
-    public function store(Request $request)
+    public function save(Request $request, ?string $id = null)
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:128', 'unique:roles,name'],
-            'accesses' => ['nullable', 'array'],
-            'accesses.*.read' => ['nullable', 'in:all,none,only'],
-            'accesses.*.view' => ['nullable', 'in:all,none,only'],
-            'accesses.*.create' => ['nullable', 'in:all,none,only'],
-            'accesses.*.update' => ['nullable', 'in:all,none,only'],
-            'accesses.*.delete' => ['nullable', 'in:all,none,only'],
-            'accesses.*.publish' => ['nullable', 'in:all,none,only'],
-        ]);
+        $role = $id ? $this->findModel(['id' => $id]) : new Role();
 
-        $role = Role::create([
-            'name' => $validated['name'],
-        ]);
+        if ($id) {
+            $this->validateAccess('update', $role);
+        } else {
+            $this->validateAccess('create', $role);
+        }
+
+        $validated = $this->validateRolePayload($request, $role);
+
+        if ($role->exists) {
+            $role->update(['name' => $validated['name']]);
+        } else {
+            $role = Role::create(['name' => $validated['name']]);
+        }
 
         $this->syncAccesses($role->id, $validated['accesses'] ?? []);
 
         return redirect()
             ->route('role-permission.index')
-            ->with('success', 'Role berhasil dibuat.');
+            ->with('success', $id ? 'Role berhasil diperbarui.' : 'Role berhasil dibuat.');
     }
 
-    public function show(int $id)
+    public function view(string $id)
     {
         return redirect()->route('role-permission.edit', $id);
     }
 
-    public function edit(int $id)
+    public function findModel(array $where)
     {
-        $role = Role::query()->findOrFail($id);
-        $this->validateAccess('update', $role);
-
-        $menus = $this->menuMatrix($role->id);
-        $selectedPermissions = $this->selectedPermissions($role->id);
-
-        return view('backend.pages.roles.edit', compact('role', 'menus', 'selectedPermissions'));
+        return Role::query()->where($where)->firstOrFail();
     }
 
-    public function update(Request $request, int $id)
+    public function delete($id, Request $request)
     {
-        $role = Role::query()->findOrFail($id);
-        $this->validateAccess('update', $role);
-
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:128', Rule::unique('roles', 'name')->ignore($role->id)],
-            'accesses' => ['nullable', 'array'],
-            'accesses.*.read' => ['nullable', 'in:all,none,only'],
-            'accesses.*.view' => ['nullable', 'in:all,none,only'],
-            'accesses.*.create' => ['nullable', 'in:all,none,only'],
-            'accesses.*.update' => ['nullable', 'in:all,none,only'],
-            'accesses.*.delete' => ['nullable', 'in:all,none,only'],
-            'accesses.*.publish' => ['nullable', 'in:all,none,only'],
-        ]);
-
-        $role->update([
-            'name' => $validated['name'],
-        ]);
-
-        $this->syncAccesses($role->id, $validated['accesses'] ?? []);
-
-        return redirect()
-            ->route('role-permission.index')
-            ->with('success', 'Role berhasil diperbarui.');
-    }
-
-    public function destroy(int $id)
-    {
-        $role = Role::query()->findOrFail($id);
+        $role = $this->findModel(['id' => $id]);
         $this->validateAccess('delete', $role);
 
         if ($role->users()->exists()) {
@@ -114,11 +89,36 @@ class RoleController extends Controller
         }
 
         DB::table('accesses')->where('id_role', $role->id)->delete();
-        $role->delete();
+        $role->deleteOrFail();
+
+        if ($request->ajax()) {
+            return null;
+        }
 
         return redirect()
             ->route('role-permission.index')
             ->with('success', 'Role berhasil dihapus.');
+    }
+
+    private function validateRolePayload(Request $request, ?Role $role = null): array
+    {
+        return $request->validate([
+            'name' => [
+                'required',
+                'string',
+                'max:128',
+                $role?->exists
+                    ? Rule::unique('roles', 'name')->ignore($role->id)
+                    : 'unique:roles,name',
+            ],
+            'accesses' => ['nullable', 'array'],
+            'accesses.*.read' => ['nullable', 'in:all,none,only'],
+            'accesses.*.view' => ['nullable', 'in:all,none,only'],
+            'accesses.*.create' => ['nullable', 'in:all,none,only'],
+            'accesses.*.update' => ['nullable', 'in:all,none,only'],
+            'accesses.*.delete' => ['nullable', 'in:all,none,only'],
+            'accesses.*.publish' => ['nullable', 'in:all,none,only'],
+        ]);
     }
 
     private function menuMatrix(?int $roleId = null): array
@@ -141,7 +141,7 @@ class RoleController extends Controller
                     'publish' => 'none',
                 ];
 
-                if (!empty($item->tree)) {
+                if (! empty($item->tree)) {
                     $item->tree = $attachAccess($item->tree);
                 }
             }

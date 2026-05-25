@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Backend;
 use App\Http\Controllers\Controller;
 use App\Models\TransportSetting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use jeemce\controllers\AuthTrait;
 
 class TransportSettingsController extends Controller
@@ -34,12 +35,12 @@ class TransportSettingsController extends Controller
         if (!$setting) {
             $setting = TransportSetting::create([
                 'base_fare' => $data['base_fare'],
-                'created_by' => auth()->id(),
+                'created_by' => Auth::id(),
             ]);
         } else {
             $setting->update([
                 'base_fare' => $data['base_fare'],
-                'updated_by' => auth()->id(),
+                'updated_by' => Auth::id(),
             ]);
         }
 

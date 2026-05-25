@@ -38,9 +38,48 @@ class TransportAllowanceController extends Controller
         return view('backend.pages.transport-allowances.index', compact('allowances'));
     }
 
-    public function form(?string $id = null)
+    public function form(Request $request, ?string $id = null)
     {
         $allowance = $id ? $this->findModel(['id' => $id]) : new TransportAllowance();
+
+        if (! $request->isMethod('get')) {
+            if ($id) {
+                $this->validateAccess('update', $allowance);
+            } else {
+                $this->validateAccess('create', $allowance);
+            }
+
+            $data = $request->validate([
+                'employee_id' => ['required', 'exists:employees,id'],
+                'month' => ['required', 'integer', 'min:1', 'max:12'],
+                'year' => ['required', 'integer'],
+                'work_days' => ['required', 'integer', 'min:0', 'max:31'],
+            ]);
+
+            $employee = Employee::findOrFail($data['employee_id']);
+            $baseFare = TransportSetting::query()->latest()->value('base_fare') ?? 0;
+            $result = $this->evaluateTransportAllowance($employee, (int) $data['work_days'], (float) $baseFare);
+
+            $payload = [
+                'employee_id' => $employee->id,
+                'month' => $data['month'],
+                'year' => $data['year'],
+                'base_fare' => $result['base_fare'],
+                'distance_km' => $result['counted_distance_km'],
+                'work_days' => $data['work_days'],
+                'total_amount' => $result['total_amount'],
+                'notes' => $result['notes'],
+                'created_by' => Auth::id(),
+            ];
+
+            if ($allowance->exists) {
+                $allowance->update($payload);
+            } else {
+                $allowance = TransportAllowance::create($payload);
+            }
+
+            return redirect()->route('transport-allowances.index')->with('success', 'Perhitungan tunjangan berhasil disimpan.');
+        }
 
         if ($id) {
             $this->validateAccess('update', $allowance);
@@ -55,48 +94,6 @@ class TransportAllowanceController extends Controller
         $baseFare = TransportSetting::query()->latest()->value('base_fare') ?? 0;
 
         return view('backend.pages.transport-allowances.create', compact('allowance', 'employees', 'baseFare'));
-    }
-
-    public function save(Request $request, ?string $id = null)
-    {
-        $allowance = $id ? $this->findModel(['id' => $id]) : new TransportAllowance();
-
-        if ($id) {
-            $this->validateAccess('update', $allowance);
-        } else {
-            $this->validateAccess('create', $allowance);
-        }
-
-        $data = $request->validate([
-            'employee_id' => ['required', 'exists:employees,id'],
-            'month' => ['required', 'integer', 'min:1', 'max:12'],
-            'year' => ['required', 'integer'],
-            'work_days' => ['required', 'integer', 'min:0', 'max:31'],
-        ]);
-
-        $employee = Employee::findOrFail($data['employee_id']);
-        $baseFare = TransportSetting::query()->latest()->value('base_fare') ?? 0;
-        $result = $this->evaluateTransportAllowance($employee, (int) $data['work_days'], (float) $baseFare);
-
-        $payload = [
-            'employee_id' => $employee->id,
-            'month' => $data['month'],
-            'year' => $data['year'],
-            'base_fare' => $result['base_fare'],
-            'distance_km' => $result['counted_distance_km'],
-            'work_days' => $data['work_days'],
-            'total_amount' => $result['total_amount'],
-            'notes' => $result['notes'],
-            'created_by' => Auth::id(),
-        ];
-
-        if ($allowance->exists) {
-            $allowance->update($payload);
-        } else {
-            $allowance = TransportAllowance::create($payload);
-        }
-
-        return redirect()->route('transport-allowances.index')->with('success', 'Perhitungan tunjangan berhasil disimpan.');
     }
 
     public function view(string $id)

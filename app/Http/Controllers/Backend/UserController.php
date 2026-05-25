@@ -50,9 +50,40 @@ class UserController extends Controller
         return view('backend.pages.users.index', compact('users', 'roles'));
     }
 
-    public function form(?string $id = null)
+    public function form(Request $request, ?string $id = null)
     {
         $user = $id ? $this->findModel(['id' => $id]) : new User();
+
+        if (! $request->isMethod('get')) {
+            if ($id) {
+                $this->validateAccess('update', $user);
+            } else {
+                $this->validateAccess('create', $user);
+            }
+
+            $validated = $this->validatePayload($request, $id ? $user : null);
+
+            if (! $id) {
+                $user->id = (string) Str::uuid();
+            }
+
+            $user->employee_id = $validated['employee_id'];
+            $user->role_id = $validated['role_id'];
+            $user->username = $validated['username'];
+            $user->email = $validated['email'];
+            $user->phone = $validated['phone'];
+
+            if (! empty($validated['password'])) {
+                $user->password = $validated['password'];
+            }
+
+            $user->is_active = $request->boolean('is_active', $id ? $user->is_active : true);
+            $user->save();
+
+            return redirect()
+                ->route('users.index')
+                ->with('success', $id ? 'User berhasil diperbarui.' : 'User berhasil ditambahkan.');
+        }
 
         if ($id) {
             $this->validateAccess('update', $user);
@@ -65,40 +96,6 @@ class UserController extends Controller
             ->get();
 
         return view($id ? 'backend.pages.users.edit' : 'backend.pages.users.create', compact('user', 'roles', 'employees'));
-    }
-
-    public function save(Request $request, ?string $id = null)
-    {
-        $user = $id ? $this->findModel(['id' => $id]) : new User();
-
-        if ($id) {
-            $this->validateAccess('update', $user);
-        } else {
-            $this->validateAccess('create', $user);
-        }
-
-        $validated = $this->validatePayload($request, $id ? $user : null);
-
-        if (! $id) {
-            $user->id = (string) Str::uuid();
-        }
-
-        $user->employee_id = $validated['employee_id'];
-        $user->role_id = $validated['role_id'];
-        $user->username = $validated['username'];
-        $user->email = $validated['email'];
-        $user->phone = $validated['phone'];
-
-        if (! empty($validated['password'])) {
-            $user->password = $validated['password'];
-        }
-
-        $user->is_active = $request->boolean('is_active', $id ? $user->is_active : true);
-        $user->save();
-
-        return redirect()
-            ->route('users.index')
-            ->with('success', $id ? 'User berhasil diperbarui.' : 'User berhasil ditambahkan.');
     }
 
     public function view(?string $id = null)

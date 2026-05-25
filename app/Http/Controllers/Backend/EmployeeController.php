@@ -146,20 +146,37 @@ class EmployeeController extends Controller
         return redirect()->back()->with('success', 'Pegawai terpilih berhasil dihapus.');
     }
 
-    public function form(?string $id = null)
+    public function form(Request $request, ?string $id = null)
     {
         $employee = $id ? $this->findModel(['id' => $id]) : new Employee();
 
-        if ($id) {
-            $this->validateAccess('update', $employee);
+        if (! $request->isMethod('get')) {
+            if ($id) {
+                $this->validateAccess('update', $employee);
+            } else {
+                $this->validateAccess('create', $employee);
+            }
+
+            $validated = $this->validateEmployeePayload($request, $employee);
+
+            if (! $id) {
+                $employee->id = (string) Str::uuid();
+            }
+
+            $this->fillEmployee($employee, $validated, $request, (bool) $id);
+            $employee->save();
+
+            $employee->educations()->delete();
+
+            if (! empty($validated['educations']) && is_array($validated['educations'])) {
+                foreach ($validated['educations'] as $edu) {
+                    $edu['employee_id'] = $employee->id;
+                    EmployeeEducation::create($edu);
+                }
+            }
+
+            return redirect()->route('employees.index')->with('success', $id ? 'Pegawai berhasil diperbarui.' : 'Pegawai berhasil ditambahkan.');
         }
-
-        return view($id ? 'backend.pages.employees.edit' : 'backend.pages.employees.create', compact('employee'));
-    }
-
-    public function save(Request $request, ?string $id = null)
-    {
-        $employee = $id ? $this->findModel(['id' => $id]) : new Employee();
 
         if ($id) {
             $this->validateAccess('update', $employee);
@@ -167,25 +184,7 @@ class EmployeeController extends Controller
             $this->validateAccess('create', $employee);
         }
 
-        $validated = $this->validateEmployeePayload($request, $employee);
-
-        if (! $id) {
-            $employee->id = (string) Str::uuid();
-        }
-
-        $this->fillEmployee($employee, $validated, $request, (bool) $id);
-        $employee->save();
-
-        $employee->educations()->delete();
-
-        if (! empty($validated['educations']) && is_array($validated['educations'])) {
-            foreach ($validated['educations'] as $edu) {
-                $edu['employee_id'] = $employee->id;
-                EmployeeEducation::create($edu);
-            }
-        }
-
-        return redirect()->route('employees.index')->with('success', $id ? 'Pegawai berhasil diperbarui.' : 'Pegawai berhasil ditambahkan.');
+        return view($id ? 'backend.pages.employees.edit' : 'backend.pages.employees.create', compact('employee'));
     }
 
     public function view(string $id)

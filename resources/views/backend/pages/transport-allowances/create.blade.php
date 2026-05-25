@@ -19,8 +19,13 @@
                     <h6 class="fw-bold mb-0">Form Parameter Perhitungan</h6>
                 </div>
                 <div class="card-body p-4">
-                    <form action="{{ route('transport-allowances.store') }}" method="POST">
+                    <form
+                        action="{{ $allowance->exists ? route('transport-allowances.update', $allowance) : route('transport-allowances.store') }}"
+                        method="POST">
                         @csrf
+                        @if ($allowance->exists)
+                            @method('PUT')
+                        @endif
 
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
@@ -32,7 +37,7 @@
                                     @foreach ($employees as $emp)
                                         <option value="{{ $emp->id }}" data-distance="{{ $emp->distance_km }}"
                                             data-status="{{ $emp->employment_status }}"
-                                            {{ old('employee_id') == $emp->id ? 'selected' : '' }}>
+                                            {{ old('employee_id', $allowance->employee_id ?? null) == $emp->id ? 'selected' : '' }}>
                                             {{ $emp->employee_code }} - {{ $emp->full_name }}
                                         </option>
                                     @endforeach
@@ -48,7 +53,7 @@
                                 <select name="month" class="form-select @error('month') is-invalid @enderror" required>
                                     @foreach (range(1, 12) as $m)
                                         <option value="{{ $m }}"
-                                            {{ old('month', date('n')) == $m ? 'selected' : '' }}>
+                                            {{ old('month', $allowance->month ?? date('n')) == $m ? 'selected' : '' }}>
                                             {{ date('F', mktime(0, 0, 0, $m, 1)) }}</option>
                                     @endforeach
                                 </select>
@@ -63,7 +68,8 @@
                                 <select name="year" class="form-select @error('year') is-invalid @enderror" required>
                                     @foreach (range(date('Y'), date('Y') - 5) as $y)
                                         <option value="{{ $y }}"
-                                            {{ old('year', date('Y')) == $y ? 'selected' : '' }}>{{ $y }}
+                                            {{ old('year', $allowance->year ?? date('Y')) == $y ? 'selected' : '' }}>
+                                            {{ $y }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -81,7 +87,8 @@
                                 <div class="input-group">
                                     <input type="number" name="work_days" id="work_days"
                                         class="form-control border-end-0 @error('work_days') is-invalid @enderror"
-                                        value="{{ old('work_days') }}" min="0" max="31" required>
+                                        value="{{ old('work_days', $allowance->work_days ?? '') }}" min="0"
+                                        max="31" required>
                                     <span class="input-group-text bg-light text-muted">Hari</span>
                                     @error('work_days')
                                         <div class="invalid-feedback">{{ $message }}</div>

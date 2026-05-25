@@ -28,9 +28,31 @@ class RoleController extends Controller
         return view('backend.pages.roles.index', compact('roles'));
     }
 
-    public function form(?string $id = null)
+    public function form(Request $request, ?string $id = null)
     {
         $role = $id ? $this->findModel(['id' => $id]) : new Role();
+
+        if (! $request->isMethod('get')) {
+            if ($id) {
+                $this->validateAccess('update', $role);
+            } else {
+                $this->validateAccess('create', $role);
+            }
+
+            $validated = $this->validateRolePayload($request, $role);
+
+            if ($role->exists) {
+                $role->update(['name' => $validated['name']]);
+            } else {
+                $role = Role::create(['name' => $validated['name']]);
+            }
+
+            $this->syncAccesses($role->id, $validated['accesses'] ?? []);
+
+            return redirect()
+                ->route('role-permission.index')
+                ->with('success', $id ? 'Role berhasil diperbarui.' : 'Role berhasil dibuat.');
+        }
 
         if ($id) {
             $this->validateAccess('update', $role);
@@ -42,31 +64,6 @@ class RoleController extends Controller
         $selectedPermissions = $role->exists ? $this->selectedPermissions($role->id) : [];
 
         return view($id ? 'backend.pages.roles.edit' : 'backend.pages.roles.create', compact('role', 'menus', 'selectedPermissions'));
-    }
-
-    public function save(Request $request, ?string $id = null)
-    {
-        $role = $id ? $this->findModel(['id' => $id]) : new Role();
-
-        if ($id) {
-            $this->validateAccess('update', $role);
-        } else {
-            $this->validateAccess('create', $role);
-        }
-
-        $validated = $this->validateRolePayload($request, $role);
-
-        if ($role->exists) {
-            $role->update(['name' => $validated['name']]);
-        } else {
-            $role = Role::create(['name' => $validated['name']]);
-        }
-
-        $this->syncAccesses($role->id, $validated['accesses'] ?? []);
-
-        return redirect()
-            ->route('role-permission.index')
-            ->with('success', $id ? 'Role berhasil diperbarui.' : 'Role berhasil dibuat.');
     }
 
     public function view(string $id)

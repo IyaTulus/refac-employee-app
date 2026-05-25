@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::controller(DashboardController::class)->group(function () {
     Route::get('/', 'index')->name('admin.dashboard');
+    Route::get('/', 'index')->name('backend.home.index');
 });
 
 Route::prefix('employees')->name('employees.')->controller(EmployeeController::class)->group(function () {
@@ -46,6 +47,12 @@ Route::prefix('user')->name('users.')->controller(UserController::class)->group(
     Route::patch('toggle-status/{id}', 'toggleStatus')->name('toggle-status');
     Route::get('check-username', 'checkUsername')->name('check-username');
     Route::get('employee-suggest', 'employeeSuggest')->name('employee-suggest');
+});
+
+Route::prefix('user')->name('backend.user.')->controller(UserController::class)->group(function () {
+    Route::get('show/{id?}', 'show')->name('show');
+    Route::get('change-password', 'editPassword')->name('changePassword');
+    Route::put('change-password', 'updatePassword')->name('updatePassword');
 });
 
 use App\Http\Controllers\Backend\TransportAllowanceController;

@@ -79,8 +79,9 @@ class UserController extends Controller
             ->with('success', 'User berhasil ditambahkan.');
     }
 
-    public function show(string $id)
+    public function show(?string $id = null)
     {
+        $id ??= (string) auth()->id();
         return redirect()->route('users.edit', $id);
     }
 
@@ -197,6 +198,24 @@ class UserController extends Controller
         return response()->json([
             'data' => $employees,
         ]);
+    }
+
+    public function editPassword()
+    {
+        return view('backend.user.change_password');
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $validated = $request->validate([
+            'password' => ['required', 'confirmed', 'min:6'],
+        ]);
+
+        $user = auth()->user();
+        $user->password = Hash::make($validated['password']);
+        $user->save();
+
+        return redirect()->route('backend.home.index')->with('success', 'Password berhasil diperbarui.');
     }
 
     private function validatePayload(Request $request, ?User $user = null): array

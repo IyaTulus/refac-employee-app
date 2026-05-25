@@ -1,0 +1,20 @@
+{
+  "resources/assets/backend.ts": {
+    "file": "backend.js",
+    "name": "backend",
+    "src": "resources/assets/backend.ts",
+    "isEntry": true,
+    "imports": [
+      "resources/assets/frontend.ts"
+    ],
+    "css": [
+      "css/backend.J-82s-wq.css"
+    ]
+  },
+  "resources/assets/frontend.ts": {
+    "file": "frontend.js",
+    "name": "frontend",
+    "src": "resources/assets/frontend.ts",
+    "isEntry": true
+  }
+}

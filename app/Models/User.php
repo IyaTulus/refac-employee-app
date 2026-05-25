@@ -60,7 +60,7 @@ class User extends Authenticatable
 
     public function hasField(string $field): bool
     {
-        return array_key_exists($field, $this->getAttributes()) || $this->relationLoaded($field);
+        return array_key_exists($field, $this->getAttributes());
     }
 
     public function role(): BelongsTo

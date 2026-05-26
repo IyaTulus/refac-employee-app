@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Validation\Rule;
 
 class User extends Authenticatable
 {
@@ -76,5 +77,32 @@ class User extends Authenticatable
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
+    }
+
+    public static function rules(?self $user = null): array
+    {
+        $userId = $user?->id;
+
+        return [
+            'employee_id' => ['required', 'exists:employees,id', Rule::unique('users', 'employee_id')->ignore($userId)],
+            'role_id' => ['required', 'exists:roles,id'],
+            'username' => ['required', 'string', 'min:6', 'regex:/^[a-z0-9]+$/', Rule::unique('users', 'username')->ignore($userId)],
+            'email' => ['required', 'email', Rule::unique('users', 'email')->ignore($userId)],
+            'phone' => ['required', 'string', Rule::unique('users', 'phone')->ignore($userId)],
+            'password' => [$user ? 'nullable' : 'required', 'confirmed', 'min:6'],
+            'is_active' => ['nullable', 'boolean'],
+        ];
+    }
+
+    public static function messages(): array
+    {
+        return [];
+    }
+
+    public static function passwordRules(): array
+    {
+        return [
+            'password' => ['required', 'confirmed', 'min:6'],
+        ];
     }
 }

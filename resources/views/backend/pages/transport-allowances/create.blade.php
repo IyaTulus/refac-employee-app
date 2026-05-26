@@ -21,7 +21,7 @@
                 <div class="card-body p-4">
                     <form
                         action="{{ $allowance->exists ? route('transport-allowances.update', $allowance) : route('transport-allowances.store') }}"
-                        method="POST">
+                        method="POST" novalidate>
                         @csrf
                         @if ($allowance->exists)
                             @method('PUT')

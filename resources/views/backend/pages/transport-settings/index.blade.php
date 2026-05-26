@@ -17,7 +17,7 @@
                     <h6 class="fw-bold mb-0">Konfigurasi Tarif Dasar</h6>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('transport-settings.store') }}" method="POST">
+                    <form action="{{ route('transport-settings.store') }}" method="POST" novalidate>
                         @csrf
                         <div class="mb-4">
                             <label class="form-label text-muted small fw-semibold text-uppercase letter-spacing-1">Tarif per

@@ -46,4 +46,14 @@ class TransportAllowance extends Model
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
+
+    public static function rules(): array
+    {
+        return [
+            'employee_id' => ['required', 'exists:employees,id'],
+            'month' => ['required', 'integer', 'min:1', 'max:12'],
+            'year' => ['required', 'integer'],
+            'work_days' => ['required', 'integer', 'min:0', 'max:31'],
+        ];
+    }
 }

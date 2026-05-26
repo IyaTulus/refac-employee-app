@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 use jeemce\controllers\AuthTrait;
 use jeemce\controllers\CrudTrait;
 use jeemce\models\Menu;
@@ -39,7 +38,7 @@ class RoleController extends Controller
                 $this->validateAccess('create', $role);
             }
 
-            $validated = $this->validateRolePayload($request, $role);
+            $validated = $request->validate(Role::rules($role));
 
             if ($role->exists) {
                 $role->update(['name' => $validated['name']]);
@@ -95,27 +94,6 @@ class RoleController extends Controller
         return redirect()
             ->route('role-permission.index')
             ->with('success', 'Role berhasil dihapus.');
-    }
-
-    private function validateRolePayload(Request $request, ?Role $role = null): array
-    {
-        return $request->validate([
-            'name' => [
-                'required',
-                'string',
-                'max:128',
-                $role?->exists
-                    ? Rule::unique('roles', 'name')->ignore($role->id)
-                    : 'unique:roles,name',
-            ],
-            'accesses' => ['nullable', 'array'],
-            'accesses.*.read' => ['nullable', 'in:all,none,only'],
-            'accesses.*.view' => ['nullable', 'in:all,none,only'],
-            'accesses.*.create' => ['nullable', 'in:all,none,only'],
-            'accesses.*.update' => ['nullable', 'in:all,none,only'],
-            'accesses.*.delete' => ['nullable', 'in:all,none,only'],
-            'accesses.*.publish' => ['nullable', 'in:all,none,only'],
-        ]);
     }
 
     private function menuMatrix(?int $roleId = null): array

@@ -14,7 +14,7 @@
             <h1 class="h3 mb-0">Edit Pegawai: {{ $employee->full_name }}</h1>
         </div>
 
-        <form action="{{ route('employees.update', $employee) }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ route('employees.update', $employee) }}" method="POST" enctype="multipart/form-data" novalidate>
             @method('PUT')
             @include('backend.pages.employees._form', ['isEdit' => true])
         </form>

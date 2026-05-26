@@ -31,4 +31,11 @@ class TransportSetting extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+
+    public static function rules(): array
+    {
+        return [
+            'base_fare' => ['required', 'numeric', 'min:0'],
+        ];
+    }
 }

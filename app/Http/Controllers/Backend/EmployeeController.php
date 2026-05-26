@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Employee\StoreEmployeeRequest;
 use App\Models\Employee;
 use App\Models\EmployeeEducation;
 use Carbon\Carbon;
@@ -11,7 +10,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File as FileFacade;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 use jeemce\controllers\AuthTrait;
 use jeemce\controllers\CrudTrait;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -123,11 +121,7 @@ class EmployeeController extends Controller
 
     public function bulkAction(Request $request)
     {
-        $data = $request->validate([
-            'ids' => ['required', 'array'],
-            'ids.*' => ['required', 'string', 'exists:employees,id'],
-            'action' => ['required', 'in:active,inactive,delete'],
-        ]);
+        $data = $request->validate(Employee::bulkActionRules());
 
         $employees = Employee::whereIn('id', $data['ids'])->get();
 
@@ -157,7 +151,7 @@ class EmployeeController extends Controller
                 $this->validateAccess('create', $employee);
             }
 
-            $validated = $this->validateEmployeePayload($request, $employee);
+            $validated = $request->validate(Employee::rules($employee), Employee::messages());
 
             if (! $id) {
                 $employee->id = (string) Str::uuid();
@@ -256,19 +250,6 @@ class EmployeeController extends Controller
         }
 
         return $query;
-    }
-
-    private function validateEmployeePayload(Request $request, ?Employee $employee = null): array
-    {
-        $rules = (new StoreEmployeeRequest())->rules();
-
-        if ($employee?->exists) {
-            $rules['employee_code'] = ['required', 'string', 'regex:/^EMP-\d{3}$/', Rule::unique('employees', 'employee_code')->ignore($employee->id)];
-            $rules['email'] = ['required', 'email', 'max:255', Rule::unique('employees', 'email')->ignore($employee->id)];
-            $rules['phone'] = ['required', 'string', 'max:20', Rule::unique('employees', 'phone')->ignore($employee->id), 'regex:/^0\d{9,13}$/'];
-        }
-
-        return $request->validate($rules, (new StoreEmployeeRequest())->messages());
     }
 
     private function fillEmployee(Employee $employee, array $validated, Request $request, bool $isUpdate): void

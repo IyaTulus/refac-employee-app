@@ -11,7 +11,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 use jeemce\controllers\CrudTrait;
 use jeemce\controllers\AuthTrait;
 
@@ -61,7 +60,7 @@ class UserController extends Controller
                 $this->validateAccess('create', $user);
             }
 
-            $validated = $this->validatePayload($request, $id ? $user : null);
+            $validated = $request->validate(User::rules($id ? $user : null), User::messages());
 
             if (! $id) {
                 $user->id = (string) Str::uuid();
@@ -199,9 +198,7 @@ class UserController extends Controller
 
     public function updatePassword(Request $request)
     {
-        $validated = $request->validate([
-            'password' => ['required', 'confirmed', 'min:6'],
-        ]);
+        $validated = $request->validate(User::passwordRules());
 
         /** @var User $user */
         $user = Auth::user();
@@ -209,20 +206,5 @@ class UserController extends Controller
         $user->save();
 
         return redirect()->route('backend.home.index')->with('success', 'Password berhasil diperbarui.');
-    }
-
-    private function validatePayload(Request $request, ?User $user = null): array
-    {
-        $userId = $user?->id;
-
-        return $request->validate([
-            'employee_id' => ['required', 'exists:employees,id', Rule::unique('users', 'employee_id')->ignore($userId)],
-            'role_id' => ['required', 'exists:roles,id'],
-            'username' => ['required', 'string', 'min:6', 'regex:/^[a-z0-9]+$/', Rule::unique('users', 'username')->ignore($userId)],
-            'email' => ['required', 'email', Rule::unique('users', 'email')->ignore($userId)],
-            'phone' => ['required', 'string', Rule::unique('users', 'phone')->ignore($userId)],
-            'password' => [$user ? 'nullable' : 'required', 'confirmed', 'min:6'],
-            'is_active' => ['nullable', 'boolean'],
-        ]);
     }
 }

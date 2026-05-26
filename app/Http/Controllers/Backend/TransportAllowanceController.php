@@ -49,12 +49,7 @@ class TransportAllowanceController extends Controller
                 $this->validateAccess('create', $allowance);
             }
 
-            $data = $request->validate([
-                'employee_id' => ['required', 'exists:employees,id'],
-                'month' => ['required', 'integer', 'min:1', 'max:12'],
-                'year' => ['required', 'integer'],
-                'work_days' => ['required', 'integer', 'min:0', 'max:31'],
-            ]);
+            $data = $request->validate(TransportAllowance::rules());
 
             $employee = Employee::findOrFail($data['employee_id']);
             $baseFare = TransportSetting::query()->latest()->value('base_fare') ?? 0;

@@ -34,9 +34,7 @@ class TransportSettingsController extends Controller
             return view('backend.pages.transport-settings.index', compact('setting'));
         }
 
-        $data = $request->validate([
-            'base_fare' => ['required', 'numeric', 'min:0'],
-        ]);
+        $data = $request->validate(TransportSetting::rules());
 
         if (! $setting) {
             $setting = TransportSetting::create([

@@ -15,7 +15,7 @@
             <h1 class="h3 mb-0">Tambah Pegawai Baru</h1>
         </div>
 
-        <form action="{{ route('employees.store') }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ route('employees.store') }}" method="POST" enctype="multipart/form-data" novalidate>
             @include('backend.pages.employees._form')
         </form>
     </div>

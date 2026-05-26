@@ -12,7 +12,7 @@
 
     <div class="card card-enterprise border-0 shadow-sm">
         <div class="card-body p-4">
-            <form method="POST" action="{{ route('role-permission.store') }}">
+            <form method="POST" action="{{ route('role-permission.store') }}" novalidate>
                 @include('backend.pages.roles._form', ['isEdit' => false])
             </form>
         </div>

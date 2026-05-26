@@ -42,49 +42,27 @@ class UserController extends Controller
         return view('backend.pages.users.index', compact('users', 'roles'));
     }
 
-    public function form(Request $request, ?string $id = null)
+    public function form($id = null)
     {
-        $user = $id ? $this->findModel(['id' => $id]) : new User();
+        $isEdit = (bool) $id;
 
-        if (! $request->isMethod('get')) {
-            if ($id) {
-                $this->validateAccess('update', $user);
-            } else {
-                $this->validateAccess('create', $user);
-            }
+        $user = $isEdit
+            ? $this->findModel(['id' => $id])
+            : new User();
 
-            $validated = $request->validate(User::rules($id ? $user : null), User::messages());
-
-            if (! $id) {
-                $user->id = (string) Str::uuid();
-            }
-
-            $user->employee_id = $validated['employee_id'];
-            $user->role_id = $validated['role_id'];
-            $user->username = $validated['username'];
-            $user->email = $validated['email'];
-            $user->phone = $validated['phone'];
-
-            if (! empty($validated['password'])) {
-                $user->password = $validated['password'];
-            }
-
-            $user->is_active = $request->boolean('is_active', $id ? $user->is_active : true);
-            $user->save();
-
-            return redirect()
-                ->route('users.index')
-                ->with('success', $id ? 'User berhasil diperbarui.' : 'User berhasil ditambahkan.');
-        }
-
-        if ($id) {
+        if ($isEdit) {
             $this->validateAccess('update', $user);
+        } else {
+            $this->validateAccess('create', $user);
         }
 
-        $roles = Role::query()->orderBy('name')->get();
         $employees = Employee::query()
             ->select(['id', 'employee_code', 'full_name'])
             ->orderBy('full_name')
+            ->get();
+
+        $roles = Role::query()
+            ->orderBy('name')
             ->get();
 
         return view($id ? 'backend.pages.users.edit' : 'backend.pages.users.create', compact('user', 'roles', 'employees'));
@@ -186,7 +164,7 @@ class UserController extends Controller
 
     public function editPassword()
     {
-        return view('backend.user.change_password');
+        return view('backend.pages.users.change_password');
     }
 
     public function updatePassword(Request $request)

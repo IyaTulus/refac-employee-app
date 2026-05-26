@@ -1,3 +1,12 @@
+{{-- @php
+
+    $title = 'Form User';
+
+    $roleOptions = jeemce\models\Role::options('id', 'name');
+@endphp --}}
+
+{{-- @extends('backend.layouts.admin', get_defined_vars()) --}}
+{{-- @extends('backend/layouts/main', get_defined_vars()) --}}
 @csrf
 @if ($isEdit)
     @method('PUT')

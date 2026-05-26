@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Employee;
 use App\Models\EmployeeEducation;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File as FileFacade;
 use Illuminate\Support\Facades\Storage;
@@ -26,53 +27,16 @@ class EmployeeController extends Controller
 
     public function index(Request $request)
     {
-        $query = Employee::query();
+        $query = Employee::query()->with('educations');
 
-        if ($request->filled('search')) {
-            $s = trim($request->string('search'));
-            $query->where(function ($q) use ($s) {
-                $q->where('employee_code', 'like', "%{$s}%")
-                    ->orWhere('full_name', 'like', "%{$s}%")
-                    ->orWhere('position', 'like', "%{$s}%");
-            });
-        }
+        Employee::querySearch($query, [
+            'search' => $request->get('search'),
+            'sorter' => $this->employeeSorter($request),
+        ]);
 
-        if ($request->filled('positions')) {
-            $positions = array_filter((array) $request->input('positions', []));
-            if (! empty($positions)) {
-                $query->whereIn('position', $positions);
-            }
-        }
+        $this->applyEmployeeFilters($query, $request);
 
-        if ($request->filled('tenure_value')) {
-            $val = (int) $request->input('tenure_value');
-            $op = $request->input('tenure_operator', '>');
-            $sub = Carbon::now()->subYears($val);
-
-            if ($op === '>') {
-                $query->whereDate('join_date', '<=', $sub);
-            } elseif ($op === '<') {
-                $query->whereDate('join_date', '>', $sub);
-            } else {
-                $query->whereYear('join_date', Carbon::now()->year - $val);
-            }
-        }
-
-        $sort = $request->input('sort', 'created_at');
-        $order = $request->input('order', 'desc');
-        $allowed = ['employee_code', 'full_name', 'position', 'join_date', 'tenure', 'created_at'];
-
-        if (! in_array($sort, $allowed, true)) {
-            $sort = 'created_at';
-        }
-
-        if ($sort === 'tenure') {
-            $query->orderBy('join_date', $order === 'asc' ? 'desc' : 'asc');
-        } else {
-            $query->orderBy($sort, $order);
-        }
-
-        $employees = $query->with('educations')->paginate(10)->withQueryString();
+        $employees = $query->paginate(10)->withQueryString();
 
         return view('backend.pages.employees.index', compact('employees'));
     }
@@ -219,15 +183,18 @@ class EmployeeController extends Controller
     {
         $query = Employee::query();
 
-        if ($request->filled('search')) {
-            $s = trim($request->string('search'));
-            $query->where(function ($q) use ($s) {
-                $q->where('employee_code', 'like', "%{$s}%")
-                    ->orWhere('full_name', 'like', "%{$s}%")
-                    ->orWhere('position', 'like', "%{$s}%");
-            });
-        }
+        Employee::querySearch($query, [
+            'search' => $request->get('search'),
+            'sorter' => $this->employeeSorter($request),
+        ]);
 
+        $this->applyEmployeeFilters($query, $request);
+
+        return $query;
+    }
+
+    private function applyEmployeeFilters(Builder $query, Request $request): void
+    {
         if ($request->filled('positions')) {
             $positions = array_filter((array) $request->input('positions', []));
             if (! empty($positions)) {
@@ -248,8 +215,24 @@ class EmployeeController extends Controller
                 $query->whereYear('join_date', Carbon::now()->year - $val);
             }
         }
+    }
 
-        return $query;
+    private function employeeSorter(Request $request): array
+    {
+        $sort = (string) $request->input('sort', 'created_at');
+        $order = strtolower((string) $request->input('order', 'desc')) === 'asc' ? 'asc' : 'desc';
+
+        if ($sort === 'tenure') {
+            return ['join_date' => $order === 'asc' ? 'desc' : 'asc'];
+        }
+
+        $allowed = ['employee_code', 'full_name', 'position', 'join_date', 'created_at'];
+
+        if (! in_array($sort, $allowed, true)) {
+            $sort = 'created_at';
+        }
+
+        return [$sort => $order];
     }
 
     private function fillEmployee(Employee $employee, array $validated, Request $request, bool $isUpdate): void

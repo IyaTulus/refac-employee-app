@@ -28,23 +28,16 @@ class UserController extends Controller
     {
         $roles = Role::query()->orderBy('name')->get();
 
-        $users = User::query()
-            ->with(['employee', 'role'])
-            ->when($request->filled('search'), function ($query) use ($request) {
-                $search = trim($request->string('search'));
+        $query = User::query()->with(['employee', 'role']);
 
-                $query->where(function ($subQuery) use ($search) {
-                    $subQuery->where('username', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%")
-                        ->orWhere('phone', 'like', "%{$search}%");
-                });
-            })
-            ->when($request->filled('role'), function ($query) use ($request) {
-                $query->where('role_id', $request->integer('role'));
-            })
-            ->orderByDesc('created_at')
-            ->paginate(10)
-            ->withQueryString();
+        User::querySearch($query, [
+            'search' => $request->get('search'),
+            'filter' => [
+                'role_id' => $request->get('role'),
+            ],
+        ]);
+
+        $users = $query->paginate(10)->withQueryString();
 
         return view('backend.pages.users.index', compact('users', 'roles'));
     }

@@ -247,17 +247,20 @@
                 </tbody>
             </table>
         </div>
-        @if ($employees->hasPages())
-            <div class="card-footer border-top d-flex justify-content-between align-items-center bg-white px-4 py-3">
-                <div class="small text-muted">
-                    Menampilkan baris {{ $employees->firstItem() }} ke {{ $employees->lastItem() }} dari total
-                    {{ $employees->total() }} pegawai
-                </div>
+        <div class="card-footer border-top d-flex justify-content-between align-items-center bg-white px-4 py-3">
+            <div class="small text-muted">
+                @php
+                    $employeeFrom = $employees->firstItem() ?? ($employees->count() > 0 ? 1 : 0);
+                    $employeeTo = $employees->lastItem() ?? $employees->count();
+                @endphp
+                Menampilkan baris {{ $employeeFrom }} ke {{ $employeeTo }} dari total {{ $employees->total() }} pegawai
+            </div>
+            @if ($employees->hasPages())
                 <div>
                     {{ $employees->appends(request()->query())->links('pagination::bootstrap-5') }}
                 </div>
-            </div>
-        @endif
+            @endif
+        </div>
     </div>
 @endsection
 

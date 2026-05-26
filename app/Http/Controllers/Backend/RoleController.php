@@ -20,9 +20,15 @@ class RoleController extends Controller
         $this->middlewareResourceAccess('role-permission.%');
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $roles = Role::query()->orderBy('id')->paginate(10);
+        $query = Role::query();
+
+        Role::querySearch($query, [
+            'search' => $request->get('search'),
+        ]);
+
+        $roles = $query->paginate(10)->withQueryString();
 
         return view('backend.pages.roles.index', compact('roles'));
     }

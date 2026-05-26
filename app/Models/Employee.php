@@ -3,12 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use jeemce\helpers\QuerySearch;
 use jeemce\models\Fileable;
 
 class Employee extends Model
@@ -126,6 +128,16 @@ class Employee extends Model
     public function educations(): HasMany
     {
         return $this->hasMany(EmployeeEducation::class, 'employee_id');
+    }
+
+    public static function querySearch(Builder $query, array $options = []): QuerySearch
+    {
+        return new QuerySearch($query, array_merge([
+            'searchFields' => ['employee_code', 'full_name', 'position', 'department', 'employment_status'],
+            'filterFields' => ['position', 'employment_status', 'department'],
+            'sorterFields' => ['employee_code', 'full_name', 'position', 'join_date', 'created_at'],
+            'sorterDefaultFields' => ['created_at' => 'desc'],
+        ], $options));
     }
 
     public static function rules(?self $employee = null): array

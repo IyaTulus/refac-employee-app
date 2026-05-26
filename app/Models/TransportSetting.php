@@ -3,8 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use jeemce\helpers\QuerySearch;
 
 class TransportSetting extends Model
 {
@@ -30,6 +32,15 @@ class TransportSetting extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public static function querySearch(Builder $query, array $options = []): QuerySearch
+    {
+        return new QuerySearch($query, array_merge([
+            'searchFields' => ['base_fare'],
+            'sorterFields' => ['base_fare', 'created_at', 'updated_at'],
+            'sorterDefaultFields' => ['created_at' => 'desc'],
+        ], $options));
     }
 
     public static function rules(): array

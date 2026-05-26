@@ -23,15 +23,15 @@ class TransportAllowanceController extends Controller
 
     public function index(Request $request)
     {
-        $query = TransportAllowance::with('employee')->orderByDesc('created_at');
+        $query = TransportAllowance::query()->with('employee');
 
-        if ($request->filled('month')) {
-            $query->where('month', $request->integer('month'));
-        }
-
-        if ($request->filled('year')) {
-            $query->where('year', $request->integer('year'));
-        }
+        TransportAllowance::querySearch($query, [
+            'search' => $request->get('search'),
+            'filter' => [
+                'month' => $request->get('month'),
+                'year' => $request->get('year'),
+            ],
+        ]);
 
         $allowances = $query->paginate(10)->withQueryString();
 

@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use jeemce\helpers\QuerySearch;
 
 class TransportAllowance extends Model
 {
@@ -45,6 +47,16 @@ class TransportAllowance extends Model
     public function updater(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public static function querySearch(Builder $query, array $options = []): QuerySearch
+    {
+        return new QuerySearch($query, array_merge([
+            'searchFields' => ['notes', 'month', 'year'],
+            'filterFields' => ['month', 'year', 'employee_id'],
+            'sorterFields' => ['month', 'year', 'base_fare', 'total_amount', 'created_at'],
+            'sorterDefaultFields' => ['created_at' => 'desc'],
+        ], $options));
     }
 
     public static function rules(): array

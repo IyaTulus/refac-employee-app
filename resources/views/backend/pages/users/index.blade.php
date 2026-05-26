@@ -137,15 +137,19 @@
                 </tbody>
             </table>
         </div>
-        @if ($users->hasPages())
-            <div class="card-footer border-top d-flex justify-content-between align-items-center bg-white px-4 py-3">
-                <div class="small text-muted">
-                    Menampilkan {{ $users->firstItem() }} ke {{ $users->lastItem() }} dari {{ $users->total() }} akun
-                </div>
-                <div>
-                    {{ $users->links('pagination::bootstrap-5') }}
-                </div>
+        <div class="card-footer border-top d-flex justify-content-between align-items-center bg-white px-4 py-3">
+            <div class="small text-muted">
+                @php
+                    $userFrom = $users->firstItem() ?? ($users->count() > 0 ? 1 : 0);
+                    $userTo = $users->lastItem() ?? $users->count();
+                @endphp
+                Menampilkan {{ $userFrom }} ke {{ $userTo }} dari {{ $users->total() }} akun
             </div>
-        @endif
+            @if ($users->hasPages())
+                <div>
+                    {{ $users->appends(request()->query())->links('pagination::bootstrap-5') }}
+                </div>
+            @endif
+        </div>
     </div>
 @endsection

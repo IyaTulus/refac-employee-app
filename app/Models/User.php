@@ -4,11 +4,13 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Validation\Rule;
+use jeemce\helpers\QuerySearch;
 
 class User extends Authenticatable
 {
@@ -77,6 +79,16 @@ class User extends Authenticatable
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
+    }
+
+    public static function querySearch(Builder $query, array $options = []): QuerySearch
+    {
+        return new QuerySearch($query, array_merge([
+            'searchFields' => ['username', 'email', 'phone'],
+            'filterFields' => ['role_id'],
+            'sorterFields' => ['username', 'email', 'phone', 'created_at'],
+            'sorterDefaultFields' => ['created_at' => 'desc'],
+        ], $options));
     }
 
     public static function rules(?self $user = null): array

@@ -120,14 +120,30 @@ class RoleController extends Controller
 
     private function menuMatrix(?int $roleId = null): array
     {
-        $menus = Menu::tree([
-            'id_menu' => null,
-            'status' => 'active',
-        ]);
+        $menus = Menu::query()
+            ->whereNull('id_menu')
+            ->where('type', 'owner_sidebar')
+            ->where('status', 'publish')
+            ->orderBy('sort')
+            ->get();
+
+        $menus = $menus->map(function ($item) {
+            $item->tree = $this->loadMenuChildren((int) $item->id);
+
+            return $item;
+        })->values()->all();
 
         $selected = $roleId ? $this->selectedPermissions($roleId) : [];
 
-        $attachAccess = function (array $items) use (&$attachAccess, $selected): array {
+        $attachAccess = function ($items) use (&$attachAccess, $selected): array {
+            if ($items instanceof \Illuminate\Support\Collection) {
+                $items = $items->all();
+            }
+
+            if (! is_array($items)) {
+                $items = (array) $items;
+            }
+
             foreach ($items as $item) {
                 $item->access = $selected[$item->id] ?? [
                     'read' => 'none',
@@ -147,6 +163,23 @@ class RoleController extends Controller
         };
 
         return $attachAccess($menus);
+    }
+
+    private function loadMenuChildren(int $parentId)
+    {
+        return Menu::query()
+            ->where('id_menu', $parentId)
+            ->where('type', 'owner_sidebar')
+            ->where('status', 'publish')
+            ->orderBy('sort')
+            ->get()
+            ->map(function ($item) {
+                $item->tree = $this->loadMenuChildren((int) $item->id);
+
+                return $item;
+            })
+            ->values()
+            ->all();
     }
 
     private function selectedPermissions(int $roleId): array

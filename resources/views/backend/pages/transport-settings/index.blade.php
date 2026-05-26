@@ -17,7 +17,7 @@
                     <h6 class="fw-bold mb-0">Konfigurasi Tarif Dasar</h6>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('transport-settings.update') }}" method="POST">
+                    <form action="{{ route('transport-settings.store') }}" method="POST">
                         @csrf
                         <div class="mb-4">
                             <label class="form-label text-muted small fw-semibold text-uppercase letter-spacing-1">Tarif per
@@ -51,8 +51,7 @@
         </div>
 
         <div class="col-md-6">
-            <div
-                class="card card-enterprise h-100 bg-primary-subtle text-primary border-primary-subtle border border-0 shadow-sm">
+            <div class="card card-enterprise h-100 bg-primary-subtle text-primary border-primary-subtle shadow-sm">
                 <div class="card-body d-flex flex-column justify-content-center p-4">
                     <div class="mb-3">
                         <i class="bi bi-info-circle-fill fs-2"></i>

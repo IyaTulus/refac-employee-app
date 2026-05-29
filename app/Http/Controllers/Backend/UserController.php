@@ -10,6 +10,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use jeemce\controllers\CrudTrait;
 use jeemce\controllers\AuthTrait;
@@ -42,7 +44,7 @@ class UserController extends Controller
         return view('backend.pages.users.index', compact('users', 'roles'));
     }
 
-    public function form($id = null)
+    public function form(Request $request, $id = null)
     {
         $isEdit = (bool) $id;
 
@@ -64,6 +66,38 @@ class UserController extends Controller
         $roles = Role::query()
             ->orderBy('name')
             ->get();
+
+        if (! $request->isMethod('get')) {
+            $params = $request->all();
+            Log::info('users.form.submit.params', ['params' => $params]);
+            $validated = Validator::make($params, User::rules($user->exists ? $user : null))->validate();
+
+            $validated['is_active'] = $request->boolean('is_active');
+
+            if (empty($validated['password'])) {
+                unset($validated['password']);
+            } else {
+                $validated['password'] = Hash::make($validated['password']);
+            }
+
+            unset($validated['password_confirmation']);
+            if (! $user->exists && empty($user->id)) {
+                $user->id = (string) Str::uuid();
+            }
+            $user->fill($validated);
+            $user->saveOrFail();
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'message' => 'User berhasil disimpan.',
+                    'redirect_url' => route('users.index'),
+                ]);
+            }
+
+            return redirect()
+                ->route('users.index')
+                ->with('success', 'User berhasil disimpan.');
+        }
 
         return view($id ? 'backend.pages.users.edit' : 'backend.pages.users.create', compact('user', 'roles', 'employees'));
     }

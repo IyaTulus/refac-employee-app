@@ -22,6 +22,7 @@
     @vite('resources/assets/backend.ts')
 
     @yield('styles')
+    @stack('styles')
 </head>
 
 <body>
@@ -84,6 +85,7 @@
     @include('backend/partials/modals')
 
     @yield('scripts')
+    @stack('scripts')
 </body>
 
 </html>

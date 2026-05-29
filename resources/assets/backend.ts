@@ -7,6 +7,95 @@ import '../../vendor/jeemce/laravel-theme-admin-v5/assets/vendor.ts'
 import '../../vendor/jeemce/laravel-theme-admin-v5/assets/theme.ts'
 import '../../vendor/jeemce/laravel/assets/main.js'
 
+// Compatibility shim: some environments load jeemce assets without registering
+// formAjaxSubmit on $.fn. Keep behavior aligned with vendor implementation.
+if (globalThis.$ && globalThis.$.fn && !globalThis.$.fn.formAjaxSubmit) {
+    globalThis.$.fn.formAjaxSubmit = function (options) {
+        options ??= {};
+
+        const viewErrors = (formElem, errors) => {
+            const foundFields = [];
+            for (const name in errors) {
+                globalThis.$(formElem).find('[name]').each(function () {
+                    const fieldElem = this;
+                    if (name === fieldElem.name || name === fieldElem.dataset.errorName) {
+                        foundFields.push(name);
+                        globalThis.$(fieldElem).addClass('is-invalid');
+                        const errorElem = globalThis.$(fieldElem).next('.invalid-feedback').get(0);
+                        if (errorElem) {
+                            globalThis.$(errorElem).html(errors[name]);
+                        } else {
+                            fieldElem.title = errors[name];
+                        }
+                    }
+                });
+            }
+
+            const notFoundFields = Object.keys(errors).filter((e) => !foundFields.includes(e));
+            if (notFoundFields.length > 0) {
+                const voidErrors = {};
+                notFoundFields.forEach((field) => {
+                    voidErrors[field] = errors[field];
+                });
+                alert(JSON.stringify(voidErrors));
+            }
+        };
+
+        this.on('submit', function (event) {
+            event.preventDefault();
+            const formElem = this;
+
+            globalThis.$(formElem).find('[name]').each(function () {
+                const fieldElem = this;
+                globalThis.$(fieldElem).removeClass('is-valid').removeClass('is-invalid').removeAttr('title');
+            });
+
+            globalThis.$.ajax({
+                url: formElem.action,
+                method: formElem.method,
+                dataType: 'json',
+                data: globalThis.$(formElem).serialize(),
+            }).done(function () {
+                if (options.doneCallback) {
+                    options.doneCallback({
+                        ...arguments,
+                        formElem: formElem,
+                    });
+                } else {
+                    formElem.submit();
+                }
+            }).fail((jqXHR) => {
+                if (jqXHR.status === 200) {
+                    if (options.doneCallback) {
+                        options.doneCallback({
+                            ...arguments,
+                            formElem: formElem,
+                        });
+                    } else {
+                        formElem.submit();
+                    }
+                    return;
+                }
+
+                if (jqXHR.status === 422 && jqXHR.responseJSON && jqXHR.responseJSON.errors) {
+                    if (options.failCallback) {
+                        options.failCallback({
+                            ...arguments,
+                            formElem: formElem,
+                        });
+                    } else {
+                        viewErrors(formElem, jqXHR.responseJSON.errors);
+                    }
+                }
+            }).always(() => {
+                globalThis.$(formElem).find('[name]:not(.is-invalid)').each(function () {
+                    globalThis.$(this).addClass('is-valid');
+                });
+            });
+        });
+    };
+}
+
 // Ensure Bootstrap dropdown instances are initialized reliably for all toggles.
 if (globalThis.bootstrap?.Dropdown) {
     document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach((toggle) => {

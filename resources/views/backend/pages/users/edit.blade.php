@@ -12,7 +12,7 @@
 
     <div class="card card-enterprise border-0 shadow-sm">
         <div class="card-body p-4">
-            <form action="{{ route('users.update', $user->id) }}" method="POST" novalidate>
+            <form id="user-form" action="{{ route('users.update', $user->id) }}" method="POST" novalidate>
                 @include('backend.pages.users._form', ['isEdit' => true])
             </form>
         </div>

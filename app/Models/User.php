@@ -29,6 +29,7 @@ class User extends Authenticatable
     protected $fillable = [
         'role_id',
         'employee_id',
+        'username',
         'name',
         'email',
         'phone',
@@ -91,6 +92,16 @@ class User extends Authenticatable
         ], $options));
     }
 
+    public function errors()
+    {
+        return [];
+    }
+
+    public function labels()
+    {
+        return [];
+    }
+
     public static function rules(?self $user = null): array
     {
         $userId = $user?->id;
@@ -104,6 +115,14 @@ class User extends Authenticatable
             'password' => [$user ? 'nullable' : 'required', 'confirmed', 'min:6'],
             'is_active' => ['nullable', 'boolean'],
         ];
+    }
+
+    public function validator($params, $rules = null, $errors = null, $labels = null)
+    {
+        $rules ??= self::rules($this->exists ? $this : null);
+        $errors ??= $this->errors();
+        $labels ??= $this->labels();
+        return validator($params, $rules, $errors, $labels);
     }
 
     public static function messages(): array

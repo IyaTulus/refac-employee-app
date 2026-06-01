@@ -15,9 +15,12 @@ Route::get('employees/index', function () {
     return redirect()->route('employees.index');
 })->name('employees.legacy-index');
 
-Route::resource('employees', EmployeeController::class);
 
+Route::resource('employees', EmployeeController::class);
+// Manual routes mapping to existing form() method pattern
 Route::prefix('employees')->name('employees.')->controller(EmployeeController::class)->group(function () {
+
+    // Export and bulk
     Route::get('export/excel', 'exportExcel')->name('export.excel');
     Route::get('export/pdf', 'exportPdf')->name('export.pdf');
     Route::post('bulk-action', 'bulkAction')->name('bulk-action');

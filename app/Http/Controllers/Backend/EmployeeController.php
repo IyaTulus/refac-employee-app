@@ -133,6 +133,14 @@ class EmployeeController extends Controller
                 }
             }
 
+            // ✅ Return JSON for AJAX requests
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => $id ? 'Pegawai berhasil diperbarui.' : 'Pegawai berhasil ditambahkan.',
+                    'redirect_url' => route('employees.index'),
+                ]);
+            }
+
             return redirect()->route('employees.index')->with('success', $id ? 'Pegawai berhasil diperbarui.' : 'Pegawai berhasil ditambahkan.');
         }
 

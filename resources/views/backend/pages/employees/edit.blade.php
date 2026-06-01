@@ -1,12 +1,14 @@
 @extends('backend.layouts.admin')
 
-@section('title', 'Kelola Pengguna')
+@section('title', 'Edit Pegawai: ' . $employee->full_name)
 @section('content')
     <div class="container pb-5">
         <nav aria-label="breadcrumb" class="mb-4">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="{{ route('employees.index') }}">Daftar Pegawai</a></li>
-                <li class="breadcrumb-item active">Edit Data</li>
+                <li class="breadcrumb-item"><a
+                        href="{{ route('employees.show', $employee->id) }}">{{ $employee->full_name }}</a></li>
+                <li class="breadcrumb-item active">Edit</li>
             </ol>
         </nav>
 
@@ -14,9 +16,77 @@
             <h1 class="h3 mb-0">Edit Pegawai: {{ $employee->full_name }}</h1>
         </div>
 
-        <form action="{{ route('employees.update', $employee) }}" method="POST" enctype="multipart/form-data" novalidate>
-            @method('PUT')
-            @include('backend.pages.employees._form', ['isEdit' => true])
-        </form>
+        @include('backend.pages.employees._form', [
+            'formAction' => route('employees.update', $employee->id),
+            'formMethod' => 'PUT',
+        ])
     </div>
 @endsection
+
+@push('scripts')
+    {{-- Embed model JSON with existing data for form hydration --}}
+    <script id="data" type="application/json">
+        {!! $employee->load('educations')->toJson(JSON_FORCE_OBJECT) !!}
+    </script>
+
+    <script type="module">
+        // Hydrate form fields from JSON data (all fields from model, not old())
+        const dataJson = jsonScriptToFormFields('#form', '#data');
+
+        // Hydrate nested education repeater
+        if (dataJson.educations && Array.isArray(dataJson.educations) && dataJson.educations.length > 0) {
+            const container = document.getElementById('educationContainer');
+            const noEdu = container.querySelector('.no-education');
+            if (noEdu) noEdu.remove();
+
+            dataJson.educations.forEach((edu, idx) => {
+                const row = window.renderEducationRow(idx, edu);
+                container.appendChild(row);
+            });
+            window.eduIndex = dataJson.educations.length;
+        }
+
+        // Setup AJAX form submit with file upload support
+        const $form = $('#form');
+
+        $form.on('submit', function(e) {
+            e.preventDefault();
+
+            // Use FormData for file upload support
+            const formData = new FormData(this);
+
+            $.ajax({
+                url: this.action,
+                method: this.method || 'POST',
+                data: formData,
+                contentType: false,
+                processData: false,
+                dataType: 'json',
+                success: function(data) {
+                    // Redirect on success
+                    if (data.redirect_url) {
+                        window.location.href = data.redirect_url;
+                    }
+                },
+                error: function(jqXHR) {
+                    if (jqXHR.status === 422 && jqXHR.responseJSON?.errors) {
+                        const errors = jqXHR.responseJSON.errors;
+
+                        // Reset error states
+                        $form.find('[name]').removeClass('is-invalid is-valid');
+                        $form.find('.invalid-feedback').html('');
+
+                        // Display validation errors
+                        for (let fieldName in errors) {
+                            const $field = $form.find(`[name="${fieldName}"]`);
+                            if ($field.length) {
+                                $field.addClass('is-invalid');
+                                $field.next('.invalid-feedback').html(errors[fieldName]);
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+@endpush

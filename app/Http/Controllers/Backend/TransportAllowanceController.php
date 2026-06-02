@@ -64,16 +64,26 @@ class TransportAllowanceController extends Controller
                 'work_days' => $data['work_days'],
                 'total_amount' => $result['total_amount'],
                 'notes' => $result['notes'],
-                'created_by' => Auth::id(),
+                'updated_by' => Auth::id(),
             ];
 
             if ($allowance->exists) {
                 $allowance->update($payload);
             } else {
+                $payload['created_by'] = Auth::id();
                 $allowance = TransportAllowance::create($payload);
             }
 
-            return redirect()->route('transport-allowances.index')->with('success', 'Perhitungan tunjangan berhasil disimpan.');
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Perhitungan tunjangan berhasil disimpan.',
+                    'redirect_url' => route('transport-allowances.index'),
+                ]);
+            }
+
+            return redirect()
+                ->route('transport-allowances.index')
+                ->with('success', 'Perhitungan tunjangan berhasil disimpan.');
         }
 
         if ($id) {

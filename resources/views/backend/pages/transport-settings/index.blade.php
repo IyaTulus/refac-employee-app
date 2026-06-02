@@ -17,7 +17,7 @@
                     <h6 class="fw-bold mb-0">Konfigurasi Tarif Dasar</h6>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('transport-settings.store') }}" method="POST" novalidate>
+                    <form id="form" action="{{ route('transport-settings.store') }}" method="POST" novalidate>
                         @csrf
                         <div class="mb-4">
                             <label class="form-label text-muted small fw-semibold text-uppercase letter-spacing-1">Tarif per
@@ -28,9 +28,7 @@
                                     class="form-control border-start-0 @error('base_fare') is-invalid @enderror ps-0"
                                     value="{{ old('base_fare', $setting ? $setting->base_fare : 0) }}" step="1"
                                     min="0">
-                                @error('base_fare')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                <div class="invalid-feedback"></div>
                             </div>
                             <div class="form-text text-muted mt-2">
                                 <i class="bi bi-info-circle me-1"></i> Tarif ini akan digunakan sebagai harga patokan per
@@ -72,3 +70,14 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+    <script id="data" type="application/json">
+    {!! $setting->toJson(JSON_FORCE_OBJECT) !!}
+</script>
+
+    <script type="module">
+        jsonScriptToFormFields('#form', '#data');
+        $('#form').formAjaxSubmit();
+    </script>
+@endpush

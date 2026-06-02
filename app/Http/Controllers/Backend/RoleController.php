@@ -37,6 +37,14 @@ class RoleController extends Controller
     {
         $role = $id ? $this->findModel(['id' => $id]) : new Role();
 
+        $isEdit = (bool) $id;
+
+        if ($isEdit) {
+            $this->validateAccess('update', $role);
+        } else {
+            $this->validateAccess('create', $role);
+        }
+
         if (! $request->isMethod('get')) {
             if ($id) {
                 $this->validateAccess('update', $role);
@@ -54,6 +62,13 @@ class RoleController extends Controller
 
             $this->syncAccesses($role->id, $validated['accesses'] ?? []);
 
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => $id ? 'Role berhasil diperbarui.' : 'Role berhasil dibuat.',
+                    'redirect_url' => route('role-permission.index'),
+                ]);
+            }
+
             return redirect()
                 ->route('role-permission.index')
                 ->with('success', $id ? 'Role berhasil diperbarui.' : 'Role berhasil dibuat.');
@@ -68,7 +83,8 @@ class RoleController extends Controller
         $menus = $this->menuMatrix($role->id ?? null);
         $selectedPermissions = $role->exists ? $this->selectedPermissions($role->id) : [];
 
-        return view($id ? 'backend.pages.roles.edit' : 'backend.pages.roles.create', compact('role', 'menus', 'selectedPermissions'));
+        return view('backend.pages.roles._form', get_defined_vars());
+        // return view($id ? 'backend.pages.roles.edit' : 'backend.pages.roles.create', compact('role', 'menus', 'selectedPermissions'));
     }
 
     public function view(string $id)

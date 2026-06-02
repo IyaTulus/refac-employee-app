@@ -108,6 +108,17 @@ class EmployeeController extends Controller
     {
         $employee = $id ? $this->findModel(['id' => $id]) : new Employee();
 
+        $isEdit = (bool) $id;
+        $user = $isEdit
+            ? $this->findModel(['id' => $id])
+            : new Employee();
+
+        if ($isEdit) {
+            $this->validateAccess('update', $user);
+        } else {
+            $this->validateAccess('create', $user);
+        }
+
         if (! $request->isMethod('get')) {
             if ($id) {
                 $this->validateAccess('update', $employee);
@@ -133,7 +144,6 @@ class EmployeeController extends Controller
                 }
             }
 
-            // ✅ Return JSON for AJAX requests
             if ($request->expectsJson()) {
                 return response()->json([
                     'message' => $id ? 'Pegawai berhasil diperbarui.' : 'Pegawai berhasil ditambahkan.',
@@ -150,7 +160,16 @@ class EmployeeController extends Controller
             $this->validateAccess('create', $employee);
         }
 
-        return view($id ? 'backend.pages.employees.edit' : 'backend.pages.employees.create', compact('employee'));
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => $id ? 'Role berhasil diperbarui.' : 'Role berhasil dibuat.',
+                'redirect_url' => route('role-permission.index'),
+            ]);
+        }
+
+        return view('backend.pages.employees._form', get_defined_vars());
+
+        // return view($id ? 'backend.pages.employees.edit' : 'backend.pages.employees.create', compact('employee'));
     }
 
     public function view(string $id)

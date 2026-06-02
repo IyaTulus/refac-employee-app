@@ -19,7 +19,8 @@
                     <h6 class="fw-bold mb-0">Form Parameter Perhitungan</h6>
                 </div>
                 <div class="card-body p-4">
-                    <form
+                    <div id="formError" class="alert alert-danger d-none mb-3"></div>
+                    <form id="form" novalidate
                         action="{{ $allowance->exists ? route('transport-allowances.update', $allowance) : route('transport-allowances.store') }}"
                         method="POST" novalidate>
                         @csrf
@@ -103,6 +104,7 @@
                                             Data kehadiran sudah valid dan terkonfirmasi
                                         </label>
                                     </div>
+                                    <div class="invalid-feedback d-block" id="confirmDataError"></div>
                                 </div>
                             </div>
                         </div>
@@ -163,6 +165,33 @@
                 const workDaysInput = document.getElementById('work_days');
                 const statusPreview = document.getElementById('statusPreview');
                 const reasonPreview = document.getElementById('reasonPreview');
+                const form = document.getElementById('form');
+                const formError = document.getElementById('formError');
+                const confirmData = document.getElementById('confirmData');
+                const confirmDataError = document.getElementById('confirmDataError');
+                const submitButton = form?.querySelector('button[type="submit"]');
+
+                const clearErrors = () => {
+                    formError.classList.add('d-none');
+                    formError.textContent = '';
+                    confirmDataError.textContent = '';
+
+                    form.querySelectorAll('[name]').forEach((field) => {
+                        field.classList.remove('is-invalid');
+                    });
+                    form.querySelectorAll('.invalid-feedback').forEach((feedback) => {
+                        if (feedback.id !== 'confirmDataError') {
+                            feedback.textContent = '';
+                        }
+                    });
+                };
+
+                const setLoading = (loading) => {
+                    if (!submitButton) return;
+                    submitButton.disabled = loading;
+                    submitButton.dataset.originalText ??= submitButton.innerHTML;
+                    submitButton.innerHTML = loading ? 'Menyimpan...' : submitButton.dataset.originalText;
+                };
 
                 const evaluateStatus = () => {
                     const selectedOpt = sel.options[sel.selectedIndex];
@@ -206,7 +235,18 @@
                         statusPreview.textContent = 'Tidak Layak';
                         statusPreview.className =
                             'badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle';
-                        reasonPreview.textContent = `Tidak layak karena ${reasons.join(', ')}.`;
+                    reasonPreview.textContent = `Tidak layak karena ${reasons.join(', ')}.`;
+                }
+                };
+
+                const setFieldError = (name, message) => {
+                    const field = form.querySelector(`[name="${name}"]`);
+                    if (!field) return;
+                    field.classList.add('is-invalid');
+
+                    const feedback = field.closest('.col-md-6, .col-md-3, .input-group, .mb-3, .col')?.querySelector('.invalid-feedback');
+                    if (feedback) {
+                        feedback.textContent = Array.isArray(message) ? message[0] : message;
                     }
                 };
 
@@ -215,6 +255,62 @@
                 });
 
                 workDaysInput.addEventListener('input', evaluateStatus);
+                form.addEventListener('submit', function(event) {
+                    event.preventDefault();
+                    clearErrors();
+
+                    if (!confirmData.checked) {
+                        confirmData.classList.add('is-invalid');
+                        confirmDataError.textContent = 'Harap konfirmasi data kehadiran terlebih dahulu.';
+                        return;
+                    }
+
+                    setLoading(true);
+
+                    const formData = new FormData(form);
+                    if (!formData.has('confirmData')) {
+                        formData.append('confirmData', '1');
+                    }
+
+                    $.ajax({
+                        url: form.action,
+                        method: form.method || 'POST',
+                        data: formData,
+                        contentType: false,
+                        processData: false,
+                        dataType: 'json',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        success: function(response) {
+                            setLoading(false);
+                            if (response?.redirect_url) {
+                                window.location.href = response.redirect_url;
+                            }
+                        },
+                        error: function(jqXHR) {
+                            setLoading(false);
+
+                            if (jqXHR.status === 422 && jqXHR.responseJSON?.errors) {
+                                const errors = jqXHR.responseJSON.errors;
+                                Object.keys(errors).forEach((fieldName) => {
+                                    if (fieldName === 'confirmData') {
+                                        confirmData.classList.add('is-invalid');
+                                        confirmDataError.textContent = Array.isArray(errors[fieldName]) ? errors[fieldName][0] : errors[fieldName];
+                                        return;
+                                    }
+
+                                    setFieldError(fieldName, errors[fieldName]);
+                                });
+                                return;
+                            }
+
+                            formError.textContent = jqXHR.responseJSON?.message ?? 'Terjadi kesalahan saat menyimpan data.';
+                            formError.classList.remove('d-none');
+                        },
+                    });
+                });
 
                 // Trigger on load for older selection
                 sel.dispatchEvent(new Event('change'));
@@ -222,3 +318,14 @@
         </script>
     @endpush
 @endsection
+
+@push('scripts')
+    <script id="data" type="application/json">
+    {!! $allowance->toJson(JSON_FORCE_OBJECT) !!}
+</script>
+
+    <script type="module">
+        jsonScriptToFormFields('#form', '#data');
+        $('#form').formAjaxSubmit();
+    </script>
+@endpush

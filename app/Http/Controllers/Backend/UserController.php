@@ -101,7 +101,8 @@ class UserController extends Controller
                 ->with('success', 'User berhasil disimpan.');
         }
 
-        return view($id ? 'backend.pages.users.edit' : 'backend.pages.users.create', compact('user', 'roles', 'employees'));
+        return view('backend.pages.users._form', get_defined_vars());
+        // return view($id ? 'backend.pages.users.edit' : 'backend.pages.users.create', compact('user', 'roles', 'employees'));
     }
 
     public function view(?string $id = null)

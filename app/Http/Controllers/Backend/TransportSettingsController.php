@@ -26,7 +26,7 @@ class TransportSettingsController extends Controller
         return view('backend.pages.transport-settings.index', compact('setting'));
     }
 
-    public function form(Request $request)
+    public function form(Request $request, ?string $id = null)
     {
         $setting = TransportSetting::latest()->first();
 
@@ -48,6 +48,14 @@ class TransportSettingsController extends Controller
             ]);
         }
 
-        return redirect()->route('transport-settings.index')->with('success', 'Pengaturan tunjangan berhasil disimpan.');
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => $id ? 'Pengaturan tunjangan berhasil diperbarui.' : 'Pengaturan tunjangan berhasil dibuat.',
+                'redirect_url' => route('transport-settings.index'),
+            ]);
+        }
+
+        return view('backend.pages.transport-settings.index', get_defined_vars());
+        // return redirect()->route('transport-settings.index')->with('success', 'Pengaturan tunjangan berhasil disimpan.');
     }
 }

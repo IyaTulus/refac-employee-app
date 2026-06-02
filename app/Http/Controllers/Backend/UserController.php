@@ -23,6 +23,8 @@ class UserController extends Controller
 
     public function __construct()
     {
+        // Buat dua access "users.% dan backend.user.%" untuk membedakan antara akses resource biasa dan akses khusus seperti change password
+        // $this->middlewareResourceAccess('backend.%');
         $this->middlewareResourceAccess('users.%');
     }
 

@@ -3,18 +3,75 @@
 @section('title', 'Tambah User')
 
 @section('content')
-    <div class="d-flex mb-4">
-        <div>
-            <h4 class="fw-bold text-dark mb-0">Tambah User</h4>
-            <p class="text-muted small mb-0">Buat akun user baru dan tentukan role RBAC-nya.</p>
-        </div>
-    </div>
+    <div class="container pb-5">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ route('users.index') }}">Daftar User</a></li>
+                <li class="breadcrumb-item active">Tambah Data Baru</li>
+            </ol>
+        </nav>
 
-    <div class="card card-enterprise border-0 shadow-sm">
-        <div class="card-body p-4">
-            <form id="user-form" action="{{ route('users.store') }}" method="POST" novalidate>
-                @include('backend.pages.users._form', ['isEdit' => false])
-            </form>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0">Tambah User Baru</h1>
         </div>
+
+        @include('backend.pages.users._form', [
+            'formAction' => route('users.store'),
+        ])
     </div>
 @endsection
+
+@push('scripts')
+    {{-- Embed model JSON for form hydration --}}
+    <script id="data" type="application/json">
+        {!! $user->toJson(JSON_FORCE_OBJECT) !!}
+    </script>
+
+    <script type="module">
+        // Hydrate form fields from JSON data
+        const dataJson = jsonScriptToFormFields('#form', '#data');
+
+        // Setup AJAX form submit with file upload support
+        const $form = $('#form');
+
+        $form.on('submit', function(e) {
+            e.preventDefault();
+
+            // Use FormData for file upload support
+            const formData = new FormData(this);
+
+            $.ajax({
+                url: this.action,
+                method: this.method || 'POST',
+                data: formData,
+                contentType: false,
+                processData: false,
+                dataType: 'json',
+                success: function(data) {
+                    // Redirect on success
+                    if (data.redirect_url) {
+                        window.location.href = data.redirect_url;
+                    }
+                },
+                error: function(jqXHR) {
+                    if (jqXHR.status === 422 && jqXHR.responseJSON?.errors) {
+                        const errors = jqXHR.responseJSON.errors;
+
+                        // Reset error states
+                        $form.find('[name]').removeClass('is-invalid is-valid');
+                        $form.find('.invalid-feedback').html('');
+
+                        // Display validation errors
+                        for (let fieldName in errors) {
+                            const $field = $form.find(`[name="${fieldName}"]`);
+                            if ($field.length) {
+                                $field.addClass('is-invalid');
+                                $field.next('.invalid-feedback').html(errors[fieldName]);
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+@endpush

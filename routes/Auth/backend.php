@@ -17,10 +17,8 @@ Route::get('employees/index', function () {
 
 
 Route::resource('employees', EmployeeController::class);
-// Manual routes mapping to existing form() method pattern
-Route::prefix('employees')->name('employees.')->controller(EmployeeController::class)->group(function () {
 
-    // Export and bulk
+Route::prefix('employees')->name('employees.')->controller(EmployeeController::class)->group(function () {
     Route::get('export/excel', 'exportExcel')->name('export.excel');
     Route::get('export/pdf', 'exportPdf')->name('export.pdf');
     Route::post('bulk-action', 'bulkAction')->name('bulk-action');
@@ -29,11 +27,10 @@ Route::prefix('employees')->name('employees.')->controller(EmployeeController::c
 
 Route::resource('role-permission', RoleController::class);
 
+Route::resource('users', UserController::class);
+
 Route::prefix('user')->name('users.')->controller(UserController::class)->group(function () {
-    Route::delete('destroy/{id}', 'destroy')->name('destroy');
     Route::patch('toggle-status/{id}', 'toggleStatus')->name('toggle-status');
-    Route::get('check-username', 'checkUsername')->name('check-username');
-    Route::get('show/{id}', 'show')->name('show');
     Route::get('employee-suggest', 'employeeSuggest')->name('employee-suggest');
 });
 

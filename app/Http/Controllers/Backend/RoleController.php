@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use jeemce\controllers\AuthTrait;
 use jeemce\controllers\CrudTrait;
+use jeemce\models\GlobalMeta;
 use jeemce\models\Menu;
 
 class RoleController extends Controller
@@ -52,7 +54,11 @@ class RoleController extends Controller
                 $this->validateAccess('create', $role);
             }
 
-            $validated = $request->validate(Role::rules($role));
+            $params = $request->all();
+            $rules = Role::rules($role);
+            $rules['meta'] = ['nullable', 'array'];
+            $rules['meta.icon'] = ['nullable', 'string'];
+            $validated = Validator::make($params, $rules)->validate();
 
             if ($role->exists) {
                 $role->update(['name' => $validated['name']]);
@@ -61,6 +67,18 @@ class RoleController extends Controller
             }
 
             $this->syncAccesses($role->id, $validated['accesses'] ?? []);
+
+            if (! empty($validated['meta'])) {
+                foreach ($validated['meta'] as $key => $value) {
+                    $meta = GlobalMeta::firstOrNew([
+                        'table_id' => $role->id,
+                        'table_name' => $role->getTable(),
+                        'key' => $key,
+                    ]);
+                    $meta->val = $value;
+                    $meta->save();
+                }
+            }
 
             if ($request->expectsJson()) {
                 return response()->json([
@@ -84,7 +102,6 @@ class RoleController extends Controller
         $selectedPermissions = $role->exists ? $this->selectedPermissions($role->id) : [];
 
         return view('backend.pages.roles._form', get_defined_vars());
-        // return view($id ? 'backend.pages.roles.edit' : 'backend.pages.roles.create', compact('role', 'menus', 'selectedPermissions'));
     }
 
     public function view(string $id)

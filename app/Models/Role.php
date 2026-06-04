@@ -7,9 +7,21 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Validation\Rule;
 use jeemce\helpers\QuerySearch;
+use jeemce\models\GlobalMeta;
+use jeemce\models\GlobalMetaTrait;
 
 class Role extends Model
 {
+    use GlobalMetaTrait;
+
+    protected string $metaTable = 'metas';
+    protected string $metaClass = GlobalMeta::class;
+
+    protected function initializeRoleTrait(): void
+    {
+        $this->initializeGlobalMetaTrait();
+    }
+
     protected $fillable = [
         'name',
     ];

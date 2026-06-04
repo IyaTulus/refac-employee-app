@@ -49,6 +49,13 @@
                     ])
                 </div>
 
+                <div class="mb-3">
+                    <label for="description" class="form-label">Icon</label>
+                    <input type="text" name="meta[icon]" class="form-control" value="{{ $role->meta->icon ?? '' }}"
+                        placeholder="Contoh: fa fa-users">
+                    <div class="invalid-feedback"></div>
+                </div>
+
                 <div class="d-flex mt-4 gap-2">
                     <button type="submit"
                         class="btn btn-enterprise-primary px-4">{{ $isEdit ? 'Simpan Perubahan' : 'Simpan Role' }}</button>
